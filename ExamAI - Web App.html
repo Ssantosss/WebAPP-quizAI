@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ExamAI - Exam Companion</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+<style>
+  body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f5f5f5;
+  }
+  .container {
+    max-width: 800px;
+    margin-top: 50px;
+  }
+  .card {
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  }
+  .card-header {
+    background-color: #007bff;
+    color: #fff;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+  .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+  }
+  .btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="mb-0">ExamAI - Exam Companion</h3>
+    </div>
+    <div class="card-body">
+      <form id="quiz-form">
+        <div class="mb-3">
+          <label for="quiz-image" class="form-label">Carica la foto dell'esame</label>
+          <input type="file" class="form-control" id="quiz-image" accept="image/*" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Analizza Esame</button>
+      </form>
+      <div id="quiz-results" class="mt-4" style="display: none;">
+        <h4>Risultati Esame:</h4>
+        <ol id="question-list"></ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const quizForm = document.getElementById('quiz-form');
+  const quizImage = document.getElementById('quiz-image');
+  const quizResults = document.getElementById('quiz-results');
+  const questionList = document.getElementById('question-list');
+
+  quizForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const file = quizImage.files[0];
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const response = await fetch('/analyze-exam', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      populateQuizResults(data.questions);
+      quizResults.style.display = 'block';
+    } catch (error) {
+      console.error('Errore durante l\'analisi dell\'esame:', error);
+      alert('Si è verificato un errore durante l\'analisi dell\'esame. Riprova più tardi.');
+    }
+  });
+
+  function populateQuizResults(questions) {
+    questionList.innerHTML = '';
+
+    for (let i = 0; i < questions.length; i++) {
+      const question = questions[i];
+      const listItem = document.createElement('li');
+      listItem.textContent = `Domanda ${i + 1}: ${question.text}`;
+      questionList.appendChild(listItem);
+    }
+  }
+</script>
+</html>
