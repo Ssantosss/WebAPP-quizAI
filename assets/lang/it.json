@@ -1,0 +1,43 @@
+{
+  "home": {
+    "title": "Allenati con Buddy",
+    "subtitle": "Puoi provare gratis un quiz completo (30 domande)",
+    "cta_start_session": "Inizia subito"
+  },
+  "auth": {
+    "email_placeholder": "Email",
+    "cta_login": "Accedi / Registrati"
+  },
+  "quiz": {
+    "thinking": "Buddy sta ragionando…",
+    "answer_label": "Risposta corretta: {X}",
+    "proceed": "Procedi",
+    "finish": "Termina esame",
+    "limit_reached": "Hai raggiunto il limite di 35 scatti per sessione."
+  },
+  "paywall": {
+    "title": "Scegli il tuo piano",
+    "premium": "Premium – €10/mese: quiz illimitati, statistiche avanzate, salvataggio progressi.",
+    "pro": "Pro – €18/mese: tutto di Premium + priorità/velocità AI.",
+    "cta_continue": "Prosegui"
+  },
+  "dashboard": {
+    "title": "Progressi"
+  },
+  "account": {
+    "title": "Account",
+    "logout": "Esci",
+    "contact": "Contattaci"
+  },
+  "summary": {
+    "title": "Esame completato",
+    "score": "Punteggio",
+    "accuracy": "Precisione",
+    "time": "Tempo",
+    "shots": "Scatti",
+    "review": "Rivedi errori",
+    "share": "Condividi",
+    "new_session": "Nuova sessione",
+    "recent": "Quiz recenti"
+  }
+}
