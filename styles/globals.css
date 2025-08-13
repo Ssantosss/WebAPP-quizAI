@@ -1,31 +1,94 @@
-body {
-  font-family: 'Roboto', sans-serif;
-  background-color: #f5f5f5;
+:root {
+  --color-bg: #ffffff;
+  --color-text: #111111;
+  --color-accent: #2ecc71;
+  --color-muted: #f2f2f2;
+  font-family: system-ui, sans-serif;
+}
+
+html, body {
+  padding: 0;
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  background: var(--color-bg);
+  border-top: 1px solid #ddd;
+  padding: 8px 0;
+}
+
+.tabbar a {
+  flex: 1;
+  text-align: center;
+  font-size: 14px;
 }
 
 .container {
-  max-width: 800px;
-  margin-top: 50px;
-}
-
-.card {
-  border-radius: 10px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-}
-
-.card-header {
-  background-color: #007bff;
-  color: #fff;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
+  padding: 16px;
 }
 
 .btn-primary {
-  background-color: #007bff;
-  border-color: #007bff;
+  background: var(--color-accent);
+  border: none;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 16px;
 }
 
-.btn-primary:hover {
-  background-color: #0056b3;
-  border-color: #0056b3;
+.btn-secondary {
+  background: var(--color-muted);
+  border: none;
+  color: var(--color-text);
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.progress-bar {
+  height: 8px;
+  background: var(--color-muted);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar > div {
+  height: 100%;
+  background: var(--color-accent);
 }
