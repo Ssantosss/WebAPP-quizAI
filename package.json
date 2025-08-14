@@ -6,13 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "TS_NODE_PREFER_TS_EXTS=true node --test --require ts-node/register"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "next": "14.0.4",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "zustand": "4.4.1"
+    "zustand": "4.4.1",
+    "zod": "3.22.4",
+    "stripe": "12.0.0"
   },
   "devDependencies": {
     "@types/node": "20.5.9",

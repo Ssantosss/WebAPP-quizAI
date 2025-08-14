@@ -1,28 +1,24 @@
 'use client';
-
+import Link from 'next/link';
+import { BuddyAvatar } from '../../components/BuddyIllustration';
 import { useApp } from '../../lib/store';
-import { t } from '../../lib/i18n';
 
-export default function AccountPage() {
-  const { user, actions } = useApp((s) => ({ user: s.user, actions: s.actions }));
-
+export default function AccountPage(){
+  const { user, actions } = useApp(s=>({user:s.user,actions:s.actions}));
   return (
-    <main className="container" style={{ paddingBottom: 80 }}>
-      <h1>{t('account.title')}</h1>
-      <div className="card">
-        <p>{user.email}</p>
-        <p>Piano: {user.plan}</p>
+    <div className="container">
+      <BuddyAvatar />
+      <p className="lead">{user.email || 'Anonimo'} – piano {user.plan}</p>
+      <Link href="/paywall" className="btn" style={{marginBottom:16}}>Gestisci abbonamento</Link>
+      <p><a href="mailto:info@example.com">Supporto</a></p>
+      <p>
+        <Link href="/privacy">Privacy</Link> · <Link href="/cookies">Cookies</Link> · <Link href="/terms">Termini</Link>
+      </p>
+      <div style={{display:'flex',gap:8,margin:'16px 0'}}>
+        <button className="btn secondary" onClick={()=>fetch('/api/account/export').then(r=>r.json()).then(j=>console.log(j))}>Export</button>
+        <button className="btn secondary" onClick={()=>fetch('/api/account/delete',{method:'POST'}).then(()=>actions.logout())}>Delete</button>
       </div>
-      <a
-        className="btn-secondary"
-        href="mailto:info@example.com"
-        style={{ display: 'block', marginBottom: 8, textAlign: 'center' }}
-      >
-        {t('account.contact')}
-      </a>
-      <button className="btn-primary" onClick={() => actions.logout()}>
-        {t('account.logout')}
-      </button>
-    </main>
+      <button className="btn secondary" onClick={()=>{actions.logout(); location.href='/'}}>Esci</button>
+    </div>
   );
 }
