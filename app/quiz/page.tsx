@@ -1,78 +1,68 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import CameraCapture from '../../components/CameraCapture';
-import BuddyMascot from '../../components/BuddyMascot';
+import { BuddyThinking } from '../../components/BuddyIllustration';
 import { useApp } from '../../lib/store';
-import { t } from '../../lib/i18n';
-
-type UIState = 'idle'|'loading'|'result';
+import { canStartQuiz } from '../../lib/quotas';
 
 export default function QuizPage(){
   const router = useRouter();
-  const { session, actions } = useApp(s=>({ session: s.session, actions: s.actions }));
-  const [ui,setUi] = useState<UIState>('idle');
-  const [pred,setPred] = useState<string>('');
-  const [limit,setLimit] = useState(false);
+  const { user, recent, session, actions } = useApp(s=>({user:s.user,recent:s.recent,session:s.session,actions:s.actions}));
+  const [ui,setUi]=useState<'idle'|'loading'|'result'>('idle');
+  const [pred,setPred]=useState('');
 
-  useEffect(()=>{ if(!session) actions.startSession(); }, [session, actions]);
+  useEffect(()=>{
+    if(!session){
+      const chk = canStartQuiz(user,recent);
+      if(!chk.ok){ alert(chk.reason==='daily'?"Limite giornaliero raggiunto":"Limite totale raggiunto"); router.push('/paywall'); return; }
+      actions.startSession();
+    }
+  },[session,user,recent,actions,router]);
 
   if(!session) return null;
+  const limit = session.shots>=35;
 
-  const count = session.answers.length + (ui==='idle'?1:0);
-
-  const onCapture = async (blob:Blob)=>{
-    const base64 = await toBase64(blob);
+  const onFile = async (e:React.ChangeEvent<HTMLInputElement>)=>{
+    const file=e.target.files?.[0]; if(!file) return;
+    const base64=await toBase64(file);
     setUi('loading');
     try{
-      const res = await fetch('/api/analyze',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ imageBase64: base64.split(',')[1], shots: session.shots })});
-      if(res.status===429){
-        setLimit(true); alert(t('quiz.limit_reached')); setUi('idle'); return;
-      }
-      const data = await res.json();
+      const res=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imageBase64:base64.split(',')[1]})});
+      const data=await res.json();
       actions.incShot();
       actions.recordAnswer(data.predicted);
       setPred(data.predicted);
-      if(session.shots+1 >= 35){ setLimit(true); }
       setUi('result');
-    }catch{
-      setUi('idle');
-    }
+    }catch{ setUi('idle'); }
   };
 
-  const proceed = ()=> setUi('idle');
-
-  const finish = ()=>{
-    const correct = session.answers.length;
-    const timeSec = Math.round((Date.now()-session.startedAt)/1000);
-    actions.finishSession({ total:30, correct, timeSec });
-    router.push(`/dashboard?score=${correct}&time=${timeSec}&shots=${session.shots}`);
-  };
+  const proceed=()=>{setUi('idle');};
+  const finish=()=>{actions.finishSession({total:session.answers.length,correct:session.answers.length,timeSec:0});router.push('/dashboard');};
 
   return (
-    <main className="container" style={{ paddingBottom:80, position:'relative' }}>
-      <div style={{ position:'absolute', top:8, right:8 }}>{count}/30</div>
-      {ui==='idle' && <CameraCapture onCapture={onCapture} />}
+    <div className="container">
+      {ui==='idle' && (
+        <input className="input" type="file" accept="image/*" capture="environment" onChange={onFile} disabled={limit} />
+      )}
       {ui==='loading' && (
-        <div style={{ textAlign:'center', marginTop:40 }}>
-          <BuddyMascot mood="thinking" />
-          <p>{t('quiz.thinking')}</p>
+        <div style={{textAlign:'center'}}>
+          <BuddyThinking />
+          <p className="lead">Analisi in corso...</p>
         </div>
       )}
       {ui==='result' && (
-        <div style={{ textAlign:'center', marginTop:40 }}>
-          <p>{t('quiz.answer_label',{ X: pred })}</p>
-          <div style={{ display:'flex', gap:8, justifyContent:'center', marginTop:16 }}>
-            <button className="btn-primary" disabled={limit} onClick={proceed}>{t('quiz.proceed')}</button>
-            <button className="btn-secondary" onClick={finish}>{t('quiz.finish')}</button>
+        <div style={{textAlign:'center'}}>
+          <p className="lead">Risposta corretta: {pred}</p>
+          <div style={{display:'flex',gap:8,justifyContent:'center'}}>
+            <button className="btn" onClick={proceed} disabled={limit}>Procedi</button>
+            <button className="btn secondary" onClick={finish}>Termina esame</button>
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }
 
-function toBase64(blob:Blob):Promise<string>{
-  return new Promise(res=>{ const r = new FileReader(); r.onload=()=>res(r.result as string); r.readAsDataURL(blob); });
+function toBase64(file:File){
+  return new Promise<string>((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result as string);r.onerror=rej;r.readAsDataURL(file);});
 }

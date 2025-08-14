@@ -1,3 +1,13 @@
 node_modules
 .next
 npm-debug.log*
+# env
+.env.local
+# binaries
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.mp4
+*.zip
+*.ico
