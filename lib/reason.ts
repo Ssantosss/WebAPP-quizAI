@@ -1,8 +1,8 @@
 import { DeepAnswer, Extracted } from "./types";
 
-export async function deepseekAnswer(e:Extracted):Promise<DeepAnswer>{
-  const sys = `Sei un risolutore di quiz. Scegli tra A-D. Restituisci SOLO JSON {predicted, confidence, explanation, sources, checks}`;
-  const user = JSON.stringify(e);
+export async function deepseekAnswer(e: Extracted, sourcesSummary: string): Promise<DeepAnswer> {
+  const sys = `Sei un risolutore di quiz. Usa esclusivamente le fonti fornite e restituisci SOLO JSON {predicted, confidence, citations:[url]}`;
+  const user = JSON.stringify({ extracted: e, sourcesSummary });
   const r = await fetch("https://api.deepseek.com/v1/chat/completions",{
     method:"POST",
     headers:{ "Content-Type":"application/json", "Authorization":`Bearer ${process.env.DEEPSEEK_API_KEY}` },
@@ -10,7 +10,7 @@ export async function deepseekAnswer(e:Extracted):Promise<DeepAnswer>{
       model: process.env.DEEPSEEK_MODEL,
       temperature: 0,
       response_format: { type:"json_object" },
-      messages: [{role:"system", content:sys},{role:"user", content:user}],
+      messages: [{ role: "system", content: sys }, { role: "user", content: user }],
       max_tokens: 300
     })
   });
