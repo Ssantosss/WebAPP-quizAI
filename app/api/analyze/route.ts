@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { geminiExtract } from "../../../lib/ocr";
 import { deepseekAnswer } from "../../../lib/reason";
 import { AnalyzeResult } from "../../../lib/types";
+import { searchOfficial } from "../../../lib/retrieve";
+import { summarizeSnippets } from "../../../lib/summarize";
 
 const MAX_RETRY = Number(process.env.MAX_RETRY||2);
 
@@ -22,8 +24,16 @@ export async function POST(req:NextRequest){
   const t0 = Date.now();
   const extracted = await retry(()=>geminiExtract(imageBase64));
   const t1 = Date.now();
-  const ans = await retry(()=>deepseekAnswer(extracted));
+  let sourcesSummary = "";
+  try {
+    const snips = await searchOfficial(extracted.prompt);
+    sourcesSummary = summarizeSnippets(snips);
+  } catch (e) {
+    console.error("search_failed", e);
+  }
+  const ans = await retry(()=>deepseekAnswer(extracted, sourcesSummary));
   const t2 = Date.now();
+  if(ans.citations) console.log("citations", ans.citations);
   const res:AnalyzeResult = { predicted: ans.predicted, latencyMs:{ ocr:t1-t0, reason:t2-t1, total:t2-t0 } };
   return NextResponse.json(res);
 }

@@ -11,7 +11,7 @@ export type DeepAnswer = {
   predicted: ChoiceLabel;
   confidence: number; // 0..1
   explanation?: string;
-  sources?: { title: string; url: string; publisher?: string }[];
+  citations?: string[];
   checks?: { negation: boolean; keywordMatch: number };
 };
 

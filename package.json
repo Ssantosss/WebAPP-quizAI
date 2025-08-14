@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "TS_NODE_PREFER_TS_EXTS=true node --test --require ts-node/register"
   },
   "dependencies": {
     "next": "14.0.4",
@@ -17,6 +18,7 @@
     "@types/node": "20.5.9",
     "@types/react": "18.2.15",
     "@types/react-dom": "18.2.7",
-    "typescript": "5.3.3"
+    "typescript": "5.3.3",
+    "ts-node": "10.9.2"
   }
 }
