@@ -3,20 +3,27 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CameraCapture from '../../components/CameraCapture';
-import BuddyMascot from '../../components/BuddyMascot';
+import { BuddyThinking } from '../../components/BuddyIllustration';
 import { useApp } from '../../lib/store';
+import { canStartQuiz } from '../../lib/quotas';
 import { t } from '../../lib/i18n';
 
 type UIState = 'idle'|'loading'|'result';
 
 export default function QuizPage(){
   const router = useRouter();
-  const { session, actions } = useApp(s=>({ session: s.session, actions: s.actions }));
+  const { session, actions, user, recent } = useApp(s=>({ session: s.session, actions: s.actions, user: s.user, recent: s.recent }));
   const [ui,setUi] = useState<UIState>('idle');
   const [pred,setPred] = useState<string>('');
   const [limit,setLimit] = useState(false);
 
-  useEffect(()=>{ if(!session) actions.startSession(); }, [session, actions]);
+  useEffect(()=>{
+    if(!session){
+      const ok = canStartQuiz(user, recent);
+      if(!ok.ok){ router.push('/paywall'); return; }
+      actions.startSession();
+    }
+  }, [session, actions, user, recent, router]);
 
   if(!session) return null;
 
@@ -51,12 +58,12 @@ export default function QuizPage(){
   };
 
   return (
-    <main className="container" style={{ paddingBottom:80, position:'relative' }}>
+    <main className="container" style={{ position:'relative' }}>
       <div style={{ position:'absolute', top:8, right:8 }}>{count}/30</div>
       {ui==='idle' && <CameraCapture onCapture={onCapture} />}
       {ui==='loading' && (
         <div style={{ textAlign:'center', marginTop:40 }}>
-          <BuddyMascot mood="thinking" />
+          <BuddyThinking />
           <p>{t('quiz.thinking')}</p>
         </div>
       )}
@@ -64,8 +71,8 @@ export default function QuizPage(){
         <div style={{ textAlign:'center', marginTop:40 }}>
           <p>{t('quiz.answer_label',{ X: pred })}</p>
           <div style={{ display:'flex', gap:8, justifyContent:'center', marginTop:16 }}>
-            <button className="btn-primary" disabled={limit} onClick={proceed}>{t('quiz.proceed')}</button>
-            <button className="btn-secondary" onClick={finish}>{t('quiz.finish')}</button>
+            <button className="btn" disabled={limit} onClick={proceed}>{t('quiz.proceed')}</button>
+            <button className="btn secondary" onClick={finish}>{t('quiz.finish')}</button>
           </div>
         </div>
       )}

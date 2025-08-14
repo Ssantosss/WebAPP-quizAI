@@ -1,6 +1,6 @@
 'use client';
 
-import BuddyMascot from '../../components/BuddyMascot';
+import { BuddyThinking } from '../../components/BuddyIllustration';
 import PaywallCard from '../../components/PaywallCard';
 import { Plan, useApp } from '../../lib/store';
 import { useRouter } from 'next/navigation';
@@ -16,9 +16,9 @@ export default function PaywallPage() {
   };
 
   return (
-    <main className="container" style={{ paddingBottom: 80 }}>
-      <BuddyMascot mood="thinking" />
-      <h1>{t('paywall.title')}</h1>
+    <main className="container">
+      <BuddyThinking />
+      <h1 className="h1">{t('paywall.title')}</h1>
       <PaywallCard
         plan="premium"
         title="Premium"

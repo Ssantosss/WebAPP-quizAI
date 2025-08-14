@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import BuddyMascot from '../../components/BuddyMascot';
+import { BuddyBook } from '../../components/BuddyIllustration';
 import { useApp } from '../../lib/store';
 import { t } from '../../lib/i18n';
 
@@ -12,8 +12,8 @@ export default function AuthPage() {
   const router = useRouter();
 
   return (
-    <main className="container" style={{ paddingBottom: 80 }}>
-      <BuddyMascot mood="thinking" />
+    <main className="container">
+      <BuddyBook />
       <input
         className="input"
         type="email"
@@ -22,7 +22,7 @@ export default function AuthPage() {
         onChange={(e) => setEmail(e.target.value)}
       />
       <button
-        className="btn-primary"
+        className="btn"
         style={{ marginTop: 16 }}
         onClick={() => {
           login(email);

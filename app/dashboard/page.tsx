@@ -12,11 +12,11 @@ export default function DashboardPage() {
   const { recent } = useApp((s) => ({ recent: s.recent }));
 
   return (
-    <main className="container" style={{ paddingBottom: 80 }}>
-      <h1>{t('dashboard.title')}</h1>
+    <main className="container">
+      <h1 className="h1">{t('dashboard.title')}</h1>
       {params.has('score') && (
         <div className="card" style={{ marginBottom: 16 }}>
-          <h2>{t('summary.title')}</h2>
+          <h2 className="h2">{t('summary.title')}</h2>
           <p>{t('summary.score')}: {score}/30</p>
           <p>{t('summary.accuracy')}: {Math.round((score/30)*100)}%</p>
           <p>{t('summary.time')}: {time}s</p>
