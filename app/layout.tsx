@@ -9,6 +9,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="it">
+      <head>
+        {/* CSS statico generato da Tailwind in prebuild */}
+        <link rel="stylesheet" href="/tw.css" />
+      </head>
       <body>{children}</body>
     </html>
   );
