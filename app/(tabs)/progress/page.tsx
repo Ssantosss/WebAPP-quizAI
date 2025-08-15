@@ -1,11 +1,11 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import Card from '../../components/Card';
-import Button from '../../components/Button';
-import { useApp } from '../../lib/store';
-import { t } from '../../lib/i18n';
-import StatBar from '../../components/StatBar';
+import Card from '@/components/Card';
+import Button from '@/components/Button';
+import StatBar from '@/components/StatBar';
+import { useApp } from '@/lib/store';
+import { t } from '@/lib/i18n';
 
 export default function DashboardPage() {
   const params = useSearchParams();
@@ -19,7 +19,7 @@ export default function DashboardPage() {
   const accuracy = totalAnswered ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
 
   return (
-    <main className="container" style={{ paddingBottom: 72 }}>
+    <div>
       <h1 className="h1">{t('dashboard.title')}</h1>
       <Card>
         <h2 className="h2">Buddy</h2>
@@ -64,6 +64,6 @@ export default function DashboardPage() {
           </Card>
         ))}
       </div>
-    </main>
+    </div>
   );
 }
