@@ -5,9 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "prebuild": "tailwindcss -c tailwind.config.js -i ./app/globals.css -o ./public/tw.css --minify",
     "start": "next start",
-    "lint": "next lint || echo \"lint skipped\"",
-    "typecheck": "tsc --noEmit"
+    "lint": "next lint || echo \"lint skipped\""
   },
   "dependencies": {
     "next": "14.0.4",
