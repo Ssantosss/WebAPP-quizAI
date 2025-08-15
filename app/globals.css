@@ -3,18 +3,20 @@
 @tailwind utilities;
 
 :root { color-scheme: light; }
-
 html, body { height: 100%; }
 body { @apply bg-neutral-50 text-neutral-900 antialiased; }
 
 .container-app { @apply max-w-md mx-auto min-h-screen bg-white; }
 
 .card { @apply rounded-2xl border border-neutral-200 bg-white shadow-sm; }
-.btn { @apply inline-flex items-center justify-center rounded-2xl font-medium active:scale-[0.99] transition; }
-.btn-hero { @apply btn h-14 px-6 text-base bg-[#176d46] text-white; }
-.btn-ghost { @apply btn h-12 px-4 bg-neutral-200 text-neutral-800; }
-.btn-outline { @apply btn h-12 px-4 border border-neutral-300 bg-white text-neutral-800; }
 
-.h1 { @apply text-5xl leading-tight font-semibold; }
+.btn       { @apply inline-flex items-center justify-center rounded-2xl font-medium active:scale-[0.99] transition; }
+.btn-hero  { @apply btn h-14 px-6 text-base bg-brand text-white; }
+.btn-ghost { @apply btn h-12 px-4 bg-neutral-200 text-neutral-800; }
+.btn-line  { @apply btn h-12 px-4 border border-neutral-300 bg-white text-neutral-800; }
+
+.h1 { @apply text-6xl leading-tight font-semibold; }     /* ~60px */
 .h2 { @apply text-3xl font-semibold; }
 .sub { @apply text-[18px] leading-6 text-neutral-700; }
+
+.nav-safe-bottom { height: calc(56px + env(safe-area-inset-bottom)); }
