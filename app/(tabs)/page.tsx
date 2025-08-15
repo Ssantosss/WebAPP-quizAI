@@ -26,7 +26,7 @@ export default function HomePage() {
         <h1 className="h1">Allenati con<br/>Buddy</h1>
       </header>
 
-      <Buddy className="w-48 h-48 mx-auto" variant="happy" />
+      <Buddy className="w-48 h-48 mx-auto" />
 
       <p className="sub text-center">Puoi provare gratis un quiz completo</p>
 

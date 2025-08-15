@@ -13,6 +13,9 @@ const config: Config = {
       borderRadius: { '2xl': '1.25rem' },
     },
   },
+  safelist: [
+    'container-app','card','btn','btn-hero','btn-ghost','btn-line','h1','h2','sub','nav-safe-bottom'
+  ],
   plugins: [],
 };
 export default config;
