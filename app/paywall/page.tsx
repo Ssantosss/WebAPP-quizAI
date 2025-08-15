@@ -1,43 +1,27 @@
 'use client';
-
-import Button from '../../components/Button';
-import Card from '../../components/Card';
-import { Buddy } from '../../components/BuddyIllustration';
-import { useRouter } from 'next/navigation';
-import { t } from '../../lib/i18n';
+import Buddy from '@/components/Buddy';
+import Button from '@/components/Button';
 
 export default function PaywallPage() {
-  const router = useRouter();
-
-  const checkout = async () => {
-    const res = await fetch('/api/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan: 'premium', period: 'month' }),
-    });
-    const data = await res.json();
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      router.push('/');
-    }
-  };
-
-  const features = t('paywall.features') as string[];
-
   return (
-    <main className="container" style={{ paddingBottom: 72, textAlign: 'center' }}>
-      <Buddy width={100} className="img-center" />
-      <h1 className="h1">{t('paywall.title')}</h1>
-      <ul style={{ textAlign: 'left', marginBottom: 24 }}>
-        {features.map((f, i) => (
-          <li key={i}>✓ {f}</li>
-        ))}
+    <div className="container-app p-4 space-y-6">
+      <h1 className="h2 text-center">Passa a Premium<br/>per continuare</h1>
+      <Buddy className="w-44 h-44 mx-auto" />
+      <ul className="space-y-2 text-[18px]">
+        <li>✓ Quiz illimitati</li>
+        <li>✓ Statistiche avanzate</li>
+        <li>✓ Salvataggio progressi</li>
       </ul>
-      <Card>
-        <h2 className="h2">{t('paywall.price')}</h2>
-        <Button onClick={checkout}>{t('paywall.cta_continue')}</Button>
-      </Card>
-    </main>
+      <div className="card p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[18px] font-semibold">Premium</div>
+            <div className="text-neutral-600">€10/mese</div>
+          </div>
+          <div className="text-2xl font-semibold">€10/m</div>
+        </div>
+      </div>
+      <Button className="w-full">Prosegui</Button>
+    </div>
   );
 }

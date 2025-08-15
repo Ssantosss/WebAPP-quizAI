@@ -1,45 +1,32 @@
 'use client';
-
-import Button from '@/components/Button';
-import Card from '@/components/Card';
-import { BuddyAvatar } from '@/components/BuddyIllustration';
-import { useApp } from '@/lib/store';
-import { t } from '@/lib/i18n';
-
+import Buddy from '@/components/Buddy';
 export default function AccountPage() {
-  const { user, actions } = useApp((s) => ({ user: s.user, actions: s.actions }));
-
   return (
-    <div style={{ textAlign: 'center' }}>
-      <BuddyAvatar width={80} className="img-center" />
-      <h1 className="h1">{t('account.title')}</h1>
-      <Card>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <span>Email</span>
-          <span>{user.email}</span>
+    <div className="space-y-6">
+      <header className="text-center mt-2">
+        <div className="w-24 h-24 mx-auto rounded-full overflow-hidden bg-neutral-100 flex items-center justify-center">
+          <Buddy className="w-16 h-16" />
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span>Piano</span>
-          <span>
-            {user.plan}{' '}
-            <a href="/paywall" style={{ color: 'var(--color-brand)', marginLeft: 4 }}>
-              {t('account.manage_plan')}
-            </a>
-          </span>
+        <h1 className="h2 mt-2">Account</h1>
+      </header>
+
+      <div className="card p-4 space-y-4">
+        <div>
+          <div className="text-neutral-600">Email</div>
+          <div className="text-[17px] font-medium">jack@example.com</div>
         </div>
-      </Card>
-      <Card>
-        <a href="mailto:support@example.com" style={{ color: 'var(--color-brand)' }}>
-          {t('account.contact')}
-        </a>
-      </Card>
-      <Button
-        variant="secondary"
-        onClick={() => actions.logout()}
-        style={{ color: '#d00', marginTop: 16 }}
-      >
-        {t('account.logout')}
-      </Button>
+        <hr className="border-neutral-200" />
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-neutral-600">Piano</div>
+            <div className="text-[17px] font-medium">Premium</div>
+          </div>
+          <a className="text-[#176d46] font-medium" href="/paywall">Gestisci abbonamento ›</a>
+        </div>
+      </div>
+
+      <div className="card p-4"><a className="text-[#176d46] font-medium" href="mailto:hello@example.com">Contattaci</a></div>
+      <div className="text-center text-red-600 font-semibold">Esci</div>
     </div>
   );
 }
