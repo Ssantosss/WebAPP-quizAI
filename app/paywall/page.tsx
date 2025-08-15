@@ -25,12 +25,12 @@ export default function PaywallPage() {
     <main className="container" style={{ paddingBottom: 72 }}>
       <h1 className="h1">Scegli il tuo piano</h1>
       <Card>
-        <h2>Premium</h2>
+        <h2 className="h2">Premium</h2>
         <p>7 quiz al giorno</p>
         <Button onClick={() => checkout('premium')}>Iscriviti</Button>
       </Card>
       <Card>
-        <h2>Pro</h2>
+        <h2 className="h2">Pro</h2>
         <p>Quiz illimitati</p>
         <Button onClick={() => checkout('pro')}>Iscriviti</Button>
       </Card>

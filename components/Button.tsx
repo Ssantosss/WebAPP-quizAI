@@ -22,7 +22,7 @@ export default function Button({
   style,
   className,
 }: Props) {
-  const base = variant === 'primary' ? 'btn' : 'btn secondary';
+  const base = variant === 'primary' ? 'btn btn-primary' : 'btn secondary';
   const cls = className ? base + ' ' + className : base;
   if (href) {
     return (
