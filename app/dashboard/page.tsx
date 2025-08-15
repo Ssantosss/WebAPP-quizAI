@@ -17,7 +17,7 @@ export default function DashboardPage() {
       <h1 className="h1">{t('dashboard.title')}</h1>
       {params.has('score') && (
         <Card>
-          <h2>{t('summary.title')}</h2>
+          <h2 className="h2">{t('summary.title')}</h2>
           <p>{t('summary.score')}: {score}/30</p>
           <p>{t('summary.accuracy')}: {Math.round((score / 30) * 100)}%</p>
           <p>{t('summary.time')}: {time}s</p>

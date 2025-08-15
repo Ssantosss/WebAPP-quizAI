@@ -1,12 +1,12 @@
 import Button from '../components/Button';
-import { BuddyBook } from '../components/BuddyIllustration';
+import { Buddy } from '../components/BuddyIllustration';
 import { t } from '../lib/i18n';
 
 export default function HomePage() {
   return (
     <main className="container" style={{ paddingBottom: 72, textAlign: 'center' }}>
-      <BuddyBook width={120} className="img-center" />
-      <h1 className="h1">{t('home.title')}</h1>
+      <Buddy width={120} className="img-center" />
+      <h1 className="h0">{t('home.title')}</h1>
       <p className="lead">{t('home.subtitle')}</p>
       <Button href="/auth">{t('home.cta_start_session')}</Button>
     </main>
