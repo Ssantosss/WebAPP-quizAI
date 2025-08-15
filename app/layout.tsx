@@ -1,12 +1,12 @@
 import './globals.css';
-import type { ReactNode } from 'react';
+import type { Metadata } from 'next';
 
-export const metadata = {
-  title: 'Buddy',
-  description: 'Quiz scanner mobile-first',
+export const metadata: Metadata = {
+  title: 'Buddy — Quiz AI',
+  viewport: { width: 'device-width', initialScale: 1, viewportFit: 'cover' },
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="it">
       <body>{children}</body>
