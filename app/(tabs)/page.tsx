@@ -1,21 +1,24 @@
 'use client';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Buddy from '@/components/Buddy';
+import BuddyHero from '@/components/BuddyHero';
 import CourseSubjectPicker, { PickerChange } from '@/components/CourseSubjectPicker';
 import { useSessionStore } from '@/store/useSessionStore';
-import { useUserStore } from '@/store/useUserStore';
+// ⚠️ niente check quote qui: il gating avviene in /quiz dentro CameraCapture
 
 export default function HomePage() {
   const router = useRouter();
-  const startSession = useSessionStore(s => s.startSession);
-  const canUseQuiz = useUserStore(s => s.canUseQuiz);
+  const startSession = useSessionStore((s) => s.startSession);
+
   const [sel, setSel] = useState<PickerChange>({ course: '', subject: '' });
+  const ready = sel.course !== '' && sel.subject !== '';
 
   const start = () => {
-    const ok = canUseQuiz();
-    if (!ok.allowed) { alert(ok.reason || 'Limite raggiunto'); return; }
-    if (!sel.course || !sel.subject) return;
+    if (!ready) {
+      alert('Seleziona Corso di Laurea e Materia');
+      return;
+    }
     startSession(sel.course, sel.subject);
     router.push('/quiz');
   };
@@ -26,15 +29,24 @@ export default function HomePage() {
         <h1 className="h1">Allenati con<br/>Buddy</h1>
       </header>
 
-      <Buddy className="w-48 h-48 mx-auto" />
+      <div className="w-full flex justify-center">
+        <BuddyHero className="w-48 h-auto" />
+      </div>
 
       <p className="sub text-center">Puoi provare gratis un quiz completo</p>
 
       <div className="card p-4">
-        <CourseSubjectPicker onChange={setSel} />
+        <CourseSubjectPicker value={sel} onChange={setSel} />
       </div>
 
-      <button onClick={start} className="btn-hero w-full">Inizia subito</button>
+      <button
+        onClick={start}
+        disabled={!ready}
+        className="btn-hero w-full disabled:opacity-50 disabled:pointer-events-none"
+      >
+        Inizia subito
+      </button>
+
       <div className="h-20" />
     </div>
   );
