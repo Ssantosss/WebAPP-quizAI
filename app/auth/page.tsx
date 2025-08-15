@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import BuddyMascot from '../../components/BuddyMascot';
+import Button from '../../components/Button';
+import { BuddyThinking } from '../../components/BuddyIllustration';
 import { useApp } from '../../lib/store';
 import { t } from '../../lib/i18n';
 
@@ -12,8 +13,8 @@ export default function AuthPage() {
   const router = useRouter();
 
   return (
-    <main className="container" style={{ paddingBottom: 80 }}>
-      <BuddyMascot mood="thinking" />
+    <main className="container" style={{ paddingBottom: 72, textAlign: 'center' }}>
+      <BuddyThinking width={100} className="img-center" />
       <input
         className="input"
         type="email"
@@ -21,16 +22,14 @@ export default function AuthPage() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
-      <button
-        className="btn-primary"
-        style={{ marginTop: 16 }}
+      <Button
         onClick={() => {
           login(email);
           router.push('/quiz');
         }}
       >
         {t('auth.cta_login')}
-      </button>
+      </Button>
     </main>
   );
 }

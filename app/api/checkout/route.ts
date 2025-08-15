@@ -22,19 +22,15 @@ const priceMap: Record<string, Record<string, string | undefined>> = {
 
 export async function POST(req: NextRequest) {
   const { plan, period } = await req.json();
-  const priceId = priceMap[plan]?.[period];
-  if (!priceId) {
-    return NextResponse.json({ error: 'invalid_price' }, { status: 400 });
+  const price = priceMap[plan]?.[period];
+  if (!price) {
+    return NextResponse.json({ error: 'invalid_price' }, { status: 400, headers: { 'Cache-Control': 'no-store' } });
   }
-  try {
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: process.env.STRIPE_SUCCESS_URL || '',
-      cancel_url: process.env.STRIPE_CANCEL_URL || '',
-    });
-    return NextResponse.json({ id: session.id });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
-  }
+  const session = await stripe.checkout.sessions.create({
+    mode: 'subscription',
+    line_items: [{ price, quantity: 1 }],
+    success_url: process.env.STRIPE_SUCCESS_URL || '/',
+    cancel_url: process.env.STRIPE_CANCEL_URL || '/',
+  });
+  return NextResponse.json({ id: session.id, url: session.url }, { headers: { 'Cache-Control': 'no-store' } });
 }

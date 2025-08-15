@@ -1,16 +1,14 @@
-import Link from 'next/link';
-import BuddyMascot from '../components/BuddyMascot';
+import Button from '../components/Button';
+import { BuddyBook } from '../components/BuddyIllustration';
 import { t } from '../lib/i18n';
 
 export default function HomePage() {
   return (
-    <main className="container" style={{ paddingBottom: 80 }}>
-      <BuddyMascot mood="welcome" />
-      <h1>{t('home.title')}</h1>
-      <p>{t('home.subtitle')}</p>
-      <Link href="/auth" className="btn-primary">
-        {t('home.cta_start_session')}
-      </Link>
+    <main className="container" style={{ paddingBottom: 72, textAlign: 'center' }}>
+      <BuddyBook width={120} className="img-center" />
+      <h1 className="h1">{t('home.title')}</h1>
+      <p className="lead">{t('home.subtitle')}</p>
+      <Button href="/auth">{t('home.cta_start_session')}</Button>
     </main>
   );
 }

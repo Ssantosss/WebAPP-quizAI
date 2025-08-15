@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Button from './Button';
 
 interface Props {
   onCapture(blob: Blob): void;
@@ -53,9 +54,7 @@ export default function CameraCapture({ onCapture }: Props) {
   return (
     <div>
       <video ref={videoRef} autoPlay playsInline style={{ width: '100%' }} />
-      <button className="btn-primary" style={{ marginTop: 8 }} onClick={takePhoto}>
-        Scatta
-      </button>
+      <Button onClick={takePhoto} style={{ marginTop: 8 }}>Scatta</Button>
     </div>
   );
 }

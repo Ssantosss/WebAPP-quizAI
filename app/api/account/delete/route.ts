@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-export async function DELETE() {
-  // In a real app, delete user data permanently.
-  return NextResponse.json({ status: 'deleted' });
+export async function POST() {
+  return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
 }
