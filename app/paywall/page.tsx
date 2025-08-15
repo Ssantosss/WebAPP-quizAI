@@ -1,36 +1,39 @@
 'use client';
 
-import BuddyMascot from '../../components/BuddyMascot';
-import PaywallCard from '../../components/PaywallCard';
-import { Plan, useApp } from '../../lib/store';
+import Button from '../../components/Button';
+import Card from '../../components/Card';
 import { useRouter } from 'next/navigation';
-import { t } from '../../lib/i18n';
 
 export default function PaywallPage() {
-  const { actions } = useApp((s) => ({ actions: s.actions }));
   const router = useRouter();
 
-  const select = (plan: Plan) => {
-    actions.upgrade(plan);
-    router.push('/');
+  const checkout = async (plan: 'premium' | 'pro') => {
+    const res = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan, period: 'month' }),
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      router.push('/');
+    }
   };
 
   return (
-    <main className="container" style={{ paddingBottom: 80 }}>
-      <BuddyMascot mood="thinking" />
-      <h1>{t('paywall.title')}</h1>
-      <PaywallCard
-        plan="premium"
-        title="Premium"
-        description={t('paywall.premium')}
-        onSelect={() => select('premium')}
-      />
-      <PaywallCard
-        plan="pro"
-        title="Pro"
-        description={t('paywall.pro')}
-        onSelect={() => select('pro')}
-      />
+    <main className="container" style={{ paddingBottom: 72 }}>
+      <h1 className="h1">Scegli il tuo piano</h1>
+      <Card>
+        <h2>Premium</h2>
+        <p>7 quiz al giorno</p>
+        <Button onClick={() => checkout('premium')}>Iscriviti</Button>
+      </Card>
+      <Card>
+        <h2>Pro</h2>
+        <p>Quiz illimitati</p>
+        <Button onClick={() => checkout('pro')}>Iscriviti</Button>
+      </Card>
     </main>
   );
 }

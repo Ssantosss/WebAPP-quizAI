@@ -1,47 +1,47 @@
-import { NextRequest, NextResponse } from "next/server";
-import { geminiExtract } from "../../../lib/ocr";
-import { deepseekAnswer } from "../../../lib/reason";
-import { AnalyzeResult } from "../../../lib/types";
-import { searchOfficial } from "../../../lib/retrieve";
-import { summarizeSnippets } from "../../../lib/summarize";
+import { NextRequest, NextResponse } from 'next/server';
+import { analyzeImage } from '../../../lib/ocr';
+import { maxQuizzes } from '../../../lib/quotas';
+import type { Plan } from '../../../lib/store';
 
-const MAX_RETRY = Number(process.env.MAX_RETRY||2);
+const RATE_LIMIT = Number(process.env.ANALYZE_MAX_PER_MIN || 30);
 const MAX_BYTES = Number(process.env.ANALYZE_MAX_BYTES || 3145728);
-const CONF_THRESHOLD = Number(process.env.CONF_THRESHOLD || 0.72);
 
-async function retry<T>(fn:()=>Promise<T>, n=MAX_RETRY){
-  let last:any;
-  for(let i=0;i<=n;i++){
-    try{ return await fn(); }
-    catch(e){ last=e; await new Promise(r=>setTimeout(r,300*(i+1))); }
-  }
-  throw last;
-}
+const rateMap = new Map<string, { ts: number; count: number }>();
+const quotaMap = new Map<string, { date: string; count: number }>();
 
-export async function POST(req:NextRequest){
-  const { imageBase64, shots=0 } = await req.json();
-  if(Number(shots) >= 35){
-    return NextResponse.json({error:"limit_reached"},{status:429});
+export async function POST(req: NextRequest) {
+  const ip = req.ip ?? req.headers.get('x-forwarded-for') ?? 'anon';
+  const now = Date.now();
+  const rl = rateMap.get(ip);
+  if (!rl || now - rl.ts > 60000) {
+    rateMap.set(ip, { ts: now, count: 1 });
+  } else {
+    rl.count++;
+    if (rl.count > RATE_LIMIT) {
+      return NextResponse.json({ error: 'rate' }, { status: 429, headers: { 'Cache-Control': 'no-store' } });
+    }
+    rateMap.set(ip, rl);
   }
-  if(Buffer.from(imageBase64,"base64").byteLength > MAX_BYTES){
-    return NextResponse.json({error:"too_large"},{status:413});
+
+  const plan = (req.headers.get('x-plan') as Plan) || 'free';
+  const today = new Date().toISOString().slice(0, 10);
+  const q = quotaMap.get(ip) || { date: today, count: 0 };
+  if (q.date !== today) {
+    q.date = today;
+    q.count = 0;
   }
-  const t0 = Date.now();
-  const extracted = await retry(()=>geminiExtract(imageBase64));
-  const t1 = Date.now();
-  let sourcesSummary = "";
-  try {
-    const snips = await searchOfficial(extracted.prompt);
-    sourcesSummary = summarizeSnippets(snips);
-  } catch (e) {
-    console.error("search_failed", e);
+  q.count++;
+  quotaMap.set(ip, q);
+  if (q.count > maxQuizzes(plan)) {
+    return NextResponse.json({ error: 'quota' }, { status: 429, headers: { 'Cache-Control': 'no-store' } });
   }
-  const ans = await retry(()=>deepseekAnswer(extracted, sourcesSummary));
-  const t2 = Date.now();
-  if(ans.citations) console.log("citations", ans.citations);
-  if(ans.confidence < CONF_THRESHOLD){
-    return NextResponse.json({error:"low_confidence"},{status:422});
+
+  const { imageBase64 } = await req.json();
+  const size = Math.ceil((imageBase64.length * 3) / 4);
+  if (size > MAX_BYTES) {
+    return NextResponse.json({ error: 'too_large' }, { status: 413, headers: { 'Cache-Control': 'no-store' } });
   }
-  const res:AnalyzeResult = { predicted: ans.predicted, latencyMs:{ ocr:t1-t0, reason:t2-t1, total:t2-t0 } };
-  return NextResponse.json(res);
+
+  const predicted = await analyzeImage(imageBase64);
+  return NextResponse.json({ predicted }, { headers: { 'Cache-Control': 'no-store' } });
 }
