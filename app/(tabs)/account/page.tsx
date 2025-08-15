@@ -1,16 +1,16 @@
 'use client';
 
-import Button from '../../components/Button';
-import Card from '../../components/Card';
-import { BuddyAvatar } from '../../components/BuddyIllustration';
-import { useApp } from '../../lib/store';
-import { t } from '../../lib/i18n';
+import Button from '@/components/Button';
+import Card from '@/components/Card';
+import { BuddyAvatar } from '@/components/BuddyIllustration';
+import { useApp } from '@/lib/store';
+import { t } from '@/lib/i18n';
 
 export default function AccountPage() {
   const { user, actions } = useApp((s) => ({ user: s.user, actions: s.actions }));
 
   return (
-    <main className="container" style={{ paddingBottom: 72, textAlign: 'center' }}>
+    <div style={{ textAlign: 'center' }}>
       <BuddyAvatar width={80} className="img-center" />
       <h1 className="h1">{t('account.title')}</h1>
       <Card>
@@ -40,6 +40,6 @@ export default function AccountPage() {
       >
         {t('account.logout')}
       </Button>
-    </main>
+    </div>
   );
 }

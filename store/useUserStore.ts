@@ -7,7 +7,7 @@ export type Plan = 'free' | 'premium' | 'pro';
 interface State {
   plan: Plan;
   usage: Usage;
-  canUseQuiz: () => boolean;
+  canUseQuiz: () => { allowed: boolean; reason?: string };
   recordUsage: () => void;
 }
 
@@ -18,7 +18,10 @@ export const useUserStore = create<State>()(
       usage: { total: 0, daily: { date: '', count: 0 } },
       canUseQuiz: () => {
         const { plan, usage } = get();
-        return quizzesLeft(plan, usage) > 0;
+        const left = quizzesLeft(plan, usage);
+        return left > 0
+          ? { allowed: true }
+          : { allowed: false, reason: 'Limite raggiunto' };
       },
       recordUsage: () =>
         set((s) => {
