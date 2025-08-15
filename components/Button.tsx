@@ -1,39 +1,10 @@
-import Link from 'next/link';
-import { ReactNode, CSSProperties } from 'react';
-
-type Props = {
-  href?: string;
-  children: ReactNode;
-  onClick?: () => void;
-  variant?: 'primary' | 'secondary';
-  type?: 'button' | 'submit';
-  disabled?: boolean;
-  style?: CSSProperties;
-  className?: string;
-};
-
-export default function Button({
-  href,
-  children,
-  onClick,
-  variant = 'primary',
-  type = 'button',
-  disabled,
-  style,
-  className,
-}: Props) {
-  const base = variant === 'primary' ? 'btn btn-primary' : 'btn secondary';
-  const cls = className ? base + ' ' + className : base;
-  if (href) {
-    return (
-      <Link href={href} className={cls} style={style}>
-        {children}
-      </Link>
-    );
-  }
-  return (
-    <button type={type} className={cls} onClick={onClick} disabled={disabled} style={style}>
-      {children}
-    </button>
-  );
+import clsx from 'clsx';
+type Props = React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary'|'ghost'|'outline'; size?: 'lg'|'md' };
+export default function Button({ className, variant='primary', size='lg', ...rest }: Props) {
+  const base = 'btn rounded-2xl';
+  const v = variant === 'primary' ? 'bg-[#176d46] text-white'
+          : variant === 'ghost' ? 'bg-neutral-200 text-neutral-800'
+          : 'border border-neutral-300 bg-white text-neutral-800';
+  const s = size === 'lg' ? 'h-14 px-6 text-base' : 'h-12 px-4 text-[15px]';
+  return <button className={clsx(base, v, s, className)} {...rest} />;
 }

@@ -6,10 +6,12 @@ type Result = { predicted: 'A'|'B'|'C'|'D'; confidence: number; latencyMs: numbe
 
 export default function CameraCapture({
   onAnalyzed,
+  onStart,
   showResultCard = true,
   ctaLabel = 'Scatta & Analizza',
 }: {
   onAnalyzed?: (r: Result) => void;
+  onStart?: () => void;
   showResultCard?: boolean;
   ctaLabel?: string;
 }) {
@@ -34,6 +36,7 @@ export default function CameraCapture({
   }, []);
 
   const snapAndAnalyze = async () => {
+    onStart?.();
     const ok = canUseQuiz();
     if (!ok.allowed) { alert(ok.reason || 'Limite raggiunto'); return; }
     if (!videoRef.current || !canvasRef.current) return;

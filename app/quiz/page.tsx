@@ -1,9 +1,9 @@
 'use client';
-
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Buddy from '@/components/Buddy';
 import CameraCapture from '@/components/CameraCapture';
+import Button from '@/components/Button';
 import { useSessionStore, QuizItem } from '@/store/useSessionStore';
 import { useUserStore } from '@/store/useUserStore';
 
@@ -15,39 +15,43 @@ export default function QuizPage() {
   const endSession = useSessionStore(s => s.endSession);
   const recordUsage = useUserStore(s => s.recordUsage);
   const [last, setLast] = useState<R | null>(null);
+  const [thinking, setThinking] = useState(false);
+
+  const onAnalyzed = (r: R) => { setThinking(false); setLast(r); };
+  const onSnap = () => { setThinking(true); };
 
   const proceed = () => {
     if (!last) return;
     const item: QuizItem = { id: crypto.randomUUID(), ...last };
-    appendResult(item);
-    recordUsage();
-    setLast(null);
+    appendResult(item); recordUsage(); setLast(null);
   };
-
   const finish = () => {
-    if (last) {
-      const item: QuizItem = { id: crypto.randomUUID(), ...last };
-      appendResult(item);
-    }
-    endSession();
-    router.push('/quiz/summary');
+    if (last) { appendResult({ id: crypto.randomUUID(), ...last }); }
+    endSession(); router.push('/quiz/summary');
   };
 
   return (
     <div className="container-app p-4 space-y-6">
-      <header className="text-center">
-        <h1 className="text-3xl font-semibold">Quiz</h1>
-      </header>
-
-      <Buddy className="w-36 h-36 mx-auto" />
+      <header className="text-center mt-4"><h1 className="h2">Quiz</h1></header>
+      <Buddy className="w-44 h-44 mx-auto" />
 
       {!last ? (
-        <CameraCapture showResultCard={false} ctaLabel="Scatta foto" onAnalyzed={setLast} />
+        <>
+          {thinking && <p className="sub text-center">Buddy sta ragionando…</p>}
+          <CameraCapture
+            showResultCard={false}
+            ctaLabel="Scatta foto"
+            onAnalyzed={onAnalyzed}
+            onStart={onSnap}
+            // piccolo hack: quando parte lo scatto, setta thinking
+            // (basta collegarlo al click del bottone del componente)
+          />
+        </>
       ) : (
         <div className="space-y-4">
           <p className="text-center text-2xl font-semibold">Risposta corretta: {last.predicted}</p>
-          <button onClick={proceed} className="btn-primary w-full h-14 rounded-2xl">Procedi</button>
-          <button onClick={finish} className="w-full h-14 rounded-2xl bg-neutral-200 text-neutral-800">Termina esame</button>
+          <Button onClick={proceed} className="w-full">Procedi</Button>
+          <Button onClick={finish} variant="ghost" className="w-full">Termina esame</Button>
         </div>
       )}
     </div>

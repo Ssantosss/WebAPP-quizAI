@@ -8,7 +8,7 @@ export default function Toast({ message }: { message: string }) {
   return (
     <div className="toast">
       {message}
-      <Button variant="secondary" onClick={() => setOpen(false)}>
+      <Button variant="ghost" onClick={() => setOpen(false)}>
         OK
       </Button>
     </div>
