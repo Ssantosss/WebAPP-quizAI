@@ -70,7 +70,7 @@ export default function CameraCapture({
         <video ref={videoRef} playsInline muted className="w-full h-auto bg-black"/>
       </div>
       <canvas ref={canvasRef} className="hidden"/>
-      <button className="btn-primary w-full h-14 rounded-2xl" onClick={snapAndAnalyze} disabled={loading}>
+      <button className="btn-hero w-full" onClick={snapAndAnalyze} disabled={loading}>
         {loading ? 'Analisi…' : ctaLabel}
       </button>
 

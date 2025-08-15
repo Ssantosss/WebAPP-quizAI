@@ -1,12 +1,11 @@
 'use client';
 import Buddy from '@/components/Buddy';
-import Button from '@/components/Button';
 
 export default function PaywallPage() {
   return (
     <div className="container-app p-4 space-y-6">
       <h1 className="h2 text-center">Passa a Premium<br/>per continuare</h1>
-      <Buddy className="w-44 h-44 mx-auto" />
+      <Buddy className="w-44 h-44 mx-auto" variant="tablet" />
       <ul className="space-y-2 text-[18px]">
         <li>✓ Quiz illimitati</li>
         <li>✓ Statistiche avanzate</li>
@@ -21,7 +20,7 @@ export default function PaywallPage() {
           <div className="text-2xl font-semibold">€10/m</div>
         </div>
       </div>
-      <Button className="w-full">Prosegui</Button>
+      <button className="btn-hero w-full">Prosegui</button>
     </div>
   );
 }

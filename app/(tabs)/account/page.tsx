@@ -21,11 +21,11 @@ export default function AccountPage() {
             <div className="text-neutral-600">Piano</div>
             <div className="text-[17px] font-medium">Premium</div>
           </div>
-          <a className="text-[#176d46] font-medium" href="/paywall">Gestisci abbonamento ›</a>
+          <a className="text-brand font-medium" href="/paywall">Gestisci abbonamento ›</a>
         </div>
       </div>
 
-      <div className="card p-4"><a className="text-[#176d46] font-medium" href="mailto:hello@example.com">Contattaci</a></div>
+      <div className="card p-4"><a className="text-brand font-medium" href="mailto:hello@example.com">Contattaci</a></div>
       <div className="text-center text-red-600 font-semibold">Esci</div>
     </div>
   );

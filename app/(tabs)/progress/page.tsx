@@ -2,7 +2,7 @@
 function Bar({ value }:{value:number}) {
   return (
     <div className="h-3 rounded-full bg-neutral-200 overflow-hidden">
-      <div className="h-full bg-[#176d46]" style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
+      <div className="h-full bg-brand" style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
     </div>
   );
 }

@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Buddy from '@/components/Buddy';
-import Button from '@/components/Button';
 import CourseSubjectPicker, { PickerChange } from '@/components/CourseSubjectPicker';
 import { useSessionStore } from '@/store/useSessionStore';
 import { useUserStore } from '@/store/useUserStore';
@@ -27,7 +26,7 @@ export default function HomePage() {
         <h1 className="h1">Allenati con<br/>Buddy</h1>
       </header>
 
-      <Buddy className="w-48 h-48 mx-auto" />
+      <Buddy className="w-48 h-48 mx-auto" variant="happy" />
 
       <p className="sub text-center">Puoi provare gratis un quiz completo</p>
 
@@ -35,8 +34,8 @@ export default function HomePage() {
         <CourseSubjectPicker onChange={setSel} />
       </div>
 
-      <Button onClick={start} className="w-full">Inizia subito</Button>
-      <div className="h-20" /> {/* spazio sopra la bottom-nav */}
+      <button onClick={start} className="btn-hero w-full">Inizia subito</button>
+      <div className="h-20" />
     </div>
   );
 }
