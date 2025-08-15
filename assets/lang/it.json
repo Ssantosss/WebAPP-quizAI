@@ -16,9 +16,13 @@
     "limit_reached": "Hai raggiunto il limite di 35 scatti per sessione."
   },
   "paywall": {
-    "title": "Scegli il tuo piano",
-    "premium": "Premium – €10/mese: quiz illimitati, statistiche avanzate, salvataggio progressi.",
-    "pro": "Pro – €18/mese: tutto di Premium + priorità/velocità AI.",
+    "title": "Passa a Premium per continuare",
+    "features": [
+      "Quiz illimitati",
+      "Statistiche avanzate",
+      "Salvataggio progressi"
+    ],
+    "price": "Premium – €10/mese",
     "cta_continue": "Prosegui"
   },
   "dashboard": {
@@ -27,7 +31,8 @@
   "account": {
     "title": "Account",
     "logout": "Esci",
-    "contact": "Contattaci"
+    "contact": "Contattaci",
+    "manage_plan": "Gestisci abbonamento"
   },
   "summary": {
     "title": "Esame completato",
