@@ -1,3 +1,7 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const runtime = 'edge'; // opzionale ma consigliato: supabase-js v2 supporta edge
+
 import { getSupabaseClient } from '@/lib/supabase';
 
 export async function GET(req: Request) {
@@ -16,3 +20,4 @@ export async function GET(req: Request) {
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' }
   });
 }
+
