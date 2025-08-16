@@ -1,25 +1,36 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import BuddyHero from '@/components/BuddyHero';
+import { useRouter } from 'next/navigation';
 import CourseSubjectPicker, { PickerChange } from '@/components/CourseSubjectPicker';
+import BuddyHero from '@/components/BuddyHero';
 import { useSessionStore } from '@/store/useSessionStore';
 
 export default function HomePage() {
+  const router = useRouter();
   const startSession = useSessionStore(s => s.startSession);
-  const [sel, setSel] = useState<PickerChange>({ course: '', subject: '' });
 
-  const ready = sel.course !== '' && sel.subject !== '';
+  const [sel, setSel] = useState<PickerChange>({
+    courseId: '', courseName: '', subjectId: '', subjectName: ''
+  });
+
+  // abilitazione chiara: serve ID di corso e materia
+  const ready = Boolean(sel.courseId && sel.subjectId);
+
+  const go = () => {
+    if (!ready) return;
+    // salviamo i NOMI (fallback sugli ID se mancano)
+    startSession(sel.courseName || sel.courseId, sel.subjectName || sel.subjectId);
+    router.push('/quiz');
+  };
 
   return (
-    <main className="flex-1 p-4 pb-32">{/* spazio per non far coprire la CTA dalla bottom-nav */}
+    <main className="flex-1 p-4 pb-32">
       <div className="space-y-6">
         <header className="text-center mt-6">
           <h1 className="h1">Allenati con<br/>Buddy</h1>
         </header>
 
-        {/* FOTO UFFICIALE */}
         <div className="w-full flex justify-center">
           <BuddyHero className="w-48 h-auto" />
         </div>
@@ -27,25 +38,17 @@ export default function HomePage() {
         <p className="sub text-center">Puoi provare gratis un quiz completo</p>
 
         <div className="card p-4">
-          {/* Picker CONTROLLATO */}
           <CourseSubjectPicker value={sel} onChange={setSel} />
         </div>
 
-        {/* CTA: quando pronto, è un <Link> che salva la sessione e NAVIGA */}
-        {ready ? (
-          <Link
-            href="/quiz"
-            prefetch={false}
-            onClick={() => startSession(sel.course, sel.subject)}
-            className="btn-hero w-full"
-          >
-            Inizia subito
-          </Link>
-        ) : (
-          <button type="button" className="btn-hero w-full opacity-50 pointer-events-none">
-            Inizia subito
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={go}
+          disabled={!ready}
+          className="btn-hero w-full disabled:opacity-50 disabled:pointer-events-none"
+        >
+          Inizia subito
+        </button>
 
         <div className="h-20" />
       </div>
