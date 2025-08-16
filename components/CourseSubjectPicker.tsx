@@ -8,31 +8,41 @@ export type PickerChange = {
 
 type Option = { id: string; name: string };
 
+// Rete di sicurezza: se per errore arrivasse una stringa JSON, estrai .id
+function normalizeId(v: string) {
+  try {
+    const dec = decodeURIComponent(v);
+    if (/^[0-9a-fA-F-]{36}$/.test(dec)) return dec;
+    const obj = JSON.parse(dec);
+    if (Array.isArray(obj) && obj[0]?.id) return String(obj[0].id);
+    if (obj && typeof obj === 'object' && 'id' in obj) return String((obj as any).id);
+  } catch {}
+  return v;
+}
+
 export default function CourseSubjectPicker({
   value, onChange,
-}: {
-  value: PickerChange;
-  onChange: (v: PickerChange) => void;
-}) {
+}: { value: PickerChange; onChange: (v: PickerChange) => void; }) {
   const [courses, setCourses] = useState<Option[]>([]);
   const [subjects, setSubjects] = useState<Option[]>([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
 
-  // carica i corsi
+  // Corsi
   useEffect(() => {
     fetch('/api/courses', { cache: 'no-store' })
       .then(r => r.json())
-      .then((rows: Option[]) => setCourses(rows))
-      .catch(() => setCourses([]));
+      .then((rows: Option[]) => setCourses(Array.isArray(rows) ? rows : []))
+      .catch((err) => { console.error('courses error', err); setCourses([]); });
   }, []);
 
-  // quando cambia corso → carica materie
+  // Materie al cambio corso
   useEffect(() => {
     if (!value.courseId) { setSubjects([]); return; }
     setLoadingSubjects(true);
-    fetch(`/api/subjects?courseId=${value.courseId}`, { cache: 'no-store' })
+    fetch(`/api/subjects?courseId=${encodeURIComponent(value.courseId)}`, { cache: 'no-store' })
       .then(r => r.json())
-      .then((rows: Option[]) => setSubjects(rows))
+      .then((rows: Option[]) => setSubjects(Array.isArray(rows) ? rows : []))
+      .catch((err) => { console.error('subjects error', err); setSubjects([]); })
       .finally(() => setLoadingSubjects(false));
   }, [value.courseId]);
 
@@ -44,7 +54,7 @@ export default function CourseSubjectPicker({
         <select
           value={value.courseId}
           onChange={(e) => {
-            const id = e.target.value;
+            const id = normalizeId(e.target.value);
             const name = courses.find(c => c.id === id)?.name || '';
             onChange({ courseId: id, courseName: name, subjectId: '', subjectName: '' });
           }}
@@ -62,7 +72,7 @@ export default function CourseSubjectPicker({
           value={value.subjectId}
           disabled={!value.courseId || loadingSubjects}
           onChange={(e) => {
-            const id = e.target.value;
+            const id = normalizeId(e.target.value);
             const name = subjects.find(s => s.id === id)?.name || '';
             onChange({ ...value, subjectId: id, subjectName: name });
           }}
