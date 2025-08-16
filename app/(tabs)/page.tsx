@@ -2,25 +2,39 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import CourseSubjectPicker, { PickerChange } from '@/components/CourseSubjectPicker';
 import BuddyHero from '@/components/BuddyHero';
+import CourseSubjectPicker, { PickerChange } from '@/components/CourseSubjectPicker';
 import { useSessionStore } from '@/store/useSessionStore';
+
+// compat: accettiamo sia lo schema nuovo (courseId/subjectId) sia quello vecchio (course/subject)
+type AnySel = PickerChange & { course?: string; subject?: string };
+
+function isReady(sel: AnySel) {
+  const courseOk  = Boolean(sel.courseId || sel.course);
+  const subjectOk = Boolean(sel.subjectId || sel.subject);
+  return courseOk && subjectOk;
+}
+
+function getNames(sel: AnySel) {
+  const courseName  = sel.courseName || sel.course || sel.courseId || '';
+  const subjectName = sel.subjectName || sel.subject || sel.subjectId || '';
+  return { courseName, subjectName };
+}
 
 export default function HomePage() {
   const router = useRouter();
   const startSession = useSessionStore(s => s.startSession);
 
-  const [sel, setSel] = useState<PickerChange>({
+  const [sel, setSel] = useState<AnySel>({
     courseId: '', courseName: '', subjectId: '', subjectName: ''
   });
 
-  // abilitazione chiara: serve ID di corso e materia
-  const ready = Boolean(sel.courseId && sel.subjectId);
+  const ready = isReady(sel);
 
   const go = () => {
     if (!ready) return;
-    // salviamo i NOMI (fallback sugli ID se mancano)
-    startSession(sel.courseName || sel.courseId, sel.subjectName || sel.subjectId);
+    const { courseName, subjectName } = getNames(sel);
+    startSession(courseName, subjectName);
     router.push('/quiz');
   };
 
@@ -38,7 +52,7 @@ export default function HomePage() {
         <p className="sub text-center">Puoi provare gratis un quiz completo</p>
 
         <div className="card p-4">
-          <CourseSubjectPicker value={sel} onChange={setSel} />
+          <CourseSubjectPicker value={sel as PickerChange} onChange={(v) => setSel(v)} />
         </div>
 
         <button
@@ -55,3 +69,4 @@ export default function HomePage() {
     </main>
   );
 }
+
