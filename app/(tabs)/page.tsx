@@ -6,31 +6,24 @@ import BuddyHero from '@/components/BuddyHero';
 import CourseSubjectPicker, { PickerChange } from '@/components/CourseSubjectPicker';
 import { useSessionStore } from '@/store/useSessionStore';
 
-// compat: accettiamo sia lo schema nuovo (courseId/subjectId) sia quello vecchio (course/subject)
 type AnySel = PickerChange & { course?: string; subject?: string };
 
 function isReady(sel: AnySel) {
-  const courseOk  = Boolean(sel.courseId || sel.course);
-  const subjectOk = Boolean(sel.subjectId || sel.subject);
-  return courseOk && subjectOk;
+  return Boolean(sel.courseId || sel.course) && Boolean(sel.subjectId || sel.subject);
 }
-
 function getNames(sel: AnySel) {
-  const courseName  = sel.courseName || sel.course || sel.courseId || '';
-  const subjectName = sel.subjectName || sel.subject || sel.subjectId || '';
-  return { courseName, subjectName };
+  return {
+    courseName: sel.courseName || sel.course || sel.courseId || '',
+    subjectName: sel.subjectName || sel.subject || sel.subjectId || '',
+  };
 }
 
 export default function HomePage() {
   const router = useRouter();
   const startSession = useSessionStore(s => s.startSession);
-
-  const [sel, setSel] = useState<AnySel>({
-    courseId: '', courseName: '', subjectId: '', subjectName: ''
-  });
+  const [sel, setSel] = useState<AnySel>({ courseId: '', courseName: '', subjectId: '', subjectName: '' });
 
   const ready = isReady(sel);
-
   const go = () => {
     if (!ready) return;
     const { courseName, subjectName } = getNames(sel);
@@ -52,7 +45,7 @@ export default function HomePage() {
         <p className="sub text-center">Puoi provare gratis un quiz completo</p>
 
         <div className="card p-4">
-          <CourseSubjectPicker value={sel as PickerChange} onChange={(v) => setSel(v)} />
+          <CourseSubjectPicker value={sel as PickerChange} onChange={setSel} />
         </div>
 
         <button
@@ -69,4 +62,3 @@ export default function HomePage() {
     </main>
   );
 }
-
