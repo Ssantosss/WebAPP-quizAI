@@ -1,37 +1,75 @@
 'use client';
-export type PickerChange = { course: string; subject: string };
+import { useEffect, useState } from 'react';
+
+export type PickerChange = {
+  courseId: string;  courseName: string;
+  subjectId: string; subjectName: string;
+};
+
+type Option = { id: string; name: string };
 
 export default function CourseSubjectPicker({
-  value, onChange, 
-  courses = ['Psicologia','Scienze della Nutrizione','Economia','Ingegneria','Scienze della Formazione'],
-  subjects = ['Algoritmi','Reti','Diritto','Statistica'],
+  value, onChange,
 }: {
-  value: PickerChange; onChange: (v: PickerChange) => void;
-  courses?: string[]; subjects?: string[];
+  value: PickerChange;
+  onChange: (v: PickerChange) => void;
 }) {
+  const [courses, setCourses] = useState<Option[]>([]);
+  const [subjects, setSubjects] = useState<Option[]>([]);
+  const [loadingSubjects, setLoadingSubjects] = useState(false);
+
+  // carica i corsi
+  useEffect(() => {
+    fetch('/api/courses', { cache: 'no-store' })
+      .then(r => r.json())
+      .then((rows: Option[]) => setCourses(rows))
+      .catch(() => setCourses([]));
+  }, []);
+
+  // quando cambia corso → carica materie
+  useEffect(() => {
+    if (!value.courseId) { setSubjects([]); return; }
+    setLoadingSubjects(true);
+    fetch(`/api/subjects?courseId=${value.courseId}`, { cache: 'no-store' })
+      .then(r => r.json())
+      .then((rows: Option[]) => setSubjects(rows))
+      .finally(() => setLoadingSubjects(false));
+  }, [value.courseId]);
+
   return (
     <div className="grid gap-3">
+      {/* CORSO */}
       <label className="block">
         <span className="text-sm text-neutral-600">Corso di Laurea</span>
         <select
-          value={value.course}
-          onChange={(e) => onChange({ course: e.target.value, subject: value.subject })}
+          value={value.courseId}
+          onChange={(e) => {
+            const id = e.target.value;
+            const name = courses.find(c => c.id === id)?.name || '';
+            onChange({ courseId: id, courseName: name, subjectId: '', subjectName: '' });
+          }}
           className="mt-1 w-full h-12 rounded-2xl border border-neutral-200 bg-white px-3"
         >
           <option value="">Seleziona corso</option>
-          {courses.map(c => <option key={c} value={c}>{c}</option>)}
+          {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       </label>
 
+      {/* MATERIA */}
       <label className="block">
         <span className="text-sm text-neutral-600">Materia</span>
         <select
-          value={value.subject}
-          onChange={(e) => onChange({ course: value.course, subject: e.target.value })}
-          className="mt-1 w-full h-12 rounded-2xl border border-neutral-200 bg-white px-3"
+          value={value.subjectId}
+          disabled={!value.courseId || loadingSubjects}
+          onChange={(e) => {
+            const id = e.target.value;
+            const name = subjects.find(s => s.id === id)?.name || '';
+            onChange({ ...value, subjectId: id, subjectName: name });
+          }}
+          className="mt-1 w-full h-12 rounded-2xl border border-neutral-200 bg-white px-3 disabled:bg-neutral-100"
         >
-          <option value="">Seleziona materia</option>
-          {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+          <option value="">{loadingSubjects ? 'Carico…' : 'Seleziona materia'}</option>
+          {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
       </label>
     </div>
