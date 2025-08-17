@@ -13,6 +13,7 @@ export async function GET() {
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     });
   } catch (e: any) {
+    console.warn('[api/courses] error:', e?.message || e);
     return new Response(JSON.stringify({ error: String(e?.message || e) }), { status: 400 });
   }
 }

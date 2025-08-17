@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { getBrowserSupabase } from '@/lib/supabase';
+import { fetchWithTimeout } from '@/lib/fetchWithTimeout';
 
 export type PickerChange = {
   courseId: string;  courseName: string;
@@ -32,19 +33,18 @@ export default function CourseSubjectPicker({
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  function setErr(msg: string|null) {
-    setApiError(msg);
-    onError?.(msg);
-  }
+  const setErr = (msg: string|null) => { setApiError(msg); onError?.(msg); };
 
-  // API → fallback Supabase
   async function loadCourses() {
     setLoadingCourses(true);
     setErr(null);
     try {
-      const r = await fetch('/api/courses', { cache: 'no-store' });
-      const j = await r.json();
+      // 1) API con timeout
+      const r = await fetchWithTimeout('/api/courses', { cache: 'no-store' }, 6000);
+      const j = await r.json().catch(() => []);
       if (Array.isArray(j) && j.length) { setCourses(j); return; }
+
+      // 2) Fallback client → Supabase (richiede CSP connect-src)
       const sb = getBrowserSupabase();
       const { data, error } = await sb.from('courses').select('id,name').order('name', { ascending: true });
       if (error) throw error;
@@ -63,12 +63,16 @@ export default function CourseSubjectPicker({
     setLoadingSubjects(true);
     setErr(null);
     try {
-      const r = await fetch(`/api/subjects?courseId=${encodeURIComponent(courseId)}`, { cache: 'no-store' });
-      const j = await r.json();
+      const r = await fetchWithTimeout(`/api/subjects?courseId=${encodeURIComponent(courseId)}`, { cache: 'no-store' }, 6000);
+      const j = await r.json().catch(() => []);
       if (Array.isArray(j) && j.length) { setSubjects(j); return; }
+
       const sb = getBrowserSupabase();
       const { data, error } = await sb
-        .from('subjects').select('id,name').eq('course_id', courseId).order('name', { ascending: true });
+        .from('subjects')
+        .select('id,name')
+        .eq('course_id', courseId)
+        .order('name', { ascending: true });
       if (error) throw error;
       setSubjects(data ?? []);
       if (!data?.length) setErr('Nessuna materia per il corso selezionato.');
