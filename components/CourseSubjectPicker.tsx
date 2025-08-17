@@ -20,33 +20,38 @@ function normalizeId(v: string) {
 }
 
 export default function CourseSubjectPicker({
-  value, onChange,
-}: { value: PickerChange; onChange: (v: PickerChange) => void; }) {
+  value, onChange, onError,
+}: {
+  value: PickerChange;
+  onChange: (v: PickerChange) => void;
+  onError?: (msg: string|null) => void;
+}) {
   const [courses, setCourses] = useState<Option[]>([]);
   const [subjects, setSubjects] = useState<Option[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  // Helper: tenta API, poi fallback a Supabase client
+  function setErr(msg: string|null) {
+    setApiError(msg);
+    onError?.(msg);
+  }
+
+  // API → fallback Supabase
   async function loadCourses() {
     setLoadingCourses(true);
-    setApiError(null);
+    setErr(null);
     try {
       const r = await fetch('/api/courses', { cache: 'no-store' });
       const j = await r.json();
-      if (Array.isArray(j) && j.length) {
-        setCourses(j);
-        return;
-      }
-      // fallback
+      if (Array.isArray(j) && j.length) { setCourses(j); return; }
       const sb = getBrowserSupabase();
       const { data, error } = await sb.from('courses').select('id,name').order('name', { ascending: true });
       if (error) throw error;
       setCourses(data ?? []);
-      if (!data?.length) setApiError('Nessun corso disponibile.');
+      if (!data?.length) setErr('Nessun corso disponibile.');
     } catch (e: any) {
-      setApiError(e?.message || 'Impossibile caricare i corsi.');
+      setErr(e?.message || 'Impossibile caricare i corsi.');
       setCourses([]);
     } finally {
       setLoadingCourses(false);
@@ -56,23 +61,19 @@ export default function CourseSubjectPicker({
   async function loadSubjects(courseId: string) {
     if (!courseId) { setSubjects([]); return; }
     setLoadingSubjects(true);
-    setApiError(null);
+    setErr(null);
     try {
       const r = await fetch(`/api/subjects?courseId=${encodeURIComponent(courseId)}`, { cache: 'no-store' });
       const j = await r.json();
-      if (Array.isArray(j) && j.length) {
-        setSubjects(j);
-        return;
-      }
-      // fallback
+      if (Array.isArray(j) && j.length) { setSubjects(j); return; }
       const sb = getBrowserSupabase();
       const { data, error } = await sb
         .from('subjects').select('id,name').eq('course_id', courseId).order('name', { ascending: true });
       if (error) throw error;
       setSubjects(data ?? []);
-      if (!data?.length) setApiError('Nessuna materia per il corso selezionato.');
+      if (!data?.length) setErr('Nessuna materia per il corso selezionato.');
     } catch (e: any) {
-      setApiError(e?.message || 'Impossibile caricare le materie.');
+      setErr(e?.message || 'Impossibile caricare le materie.');
       setSubjects([]);
     } finally {
       setLoadingSubjects(false);
@@ -121,7 +122,7 @@ export default function CourseSubjectPicker({
         <div className="text-xs text-red-600">
           {apiError}{' '}
           <button type="button" onClick={loadCourses} className="underline">Riprova</button>
-          {' · '}<a className="underline" href="/api/health" target="_blank">/api/health</a>
+          {' · '}<a className="underline" href="/api/health" target="_blank" rel="noreferrer">/api/health</a>
         </div>
       )}
     </div>

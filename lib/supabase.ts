@@ -1,20 +1,24 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
+// Next.js inietta queste stringhe a build-time nel client (inlined)
+const PUBLIC_URL = process.env.NEXT_PUBLIC_SUPABASE_URL as string | undefined;
+const PUBLIC_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string | undefined;
+
 function required<T>(v: T | undefined, name: string): T {
   if (!v) throw new Error(`${name} is missing`);
   return v;
 }
 
 export function getSupabaseClient(): SupabaseClient {
-  const url = required(process.env.NEXT_PUBLIC_SUPABASE_URL, 'NEXT_PUBLIC_SUPABASE_URL');
-  const key = required(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, 'NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  // lato server (route handlers) usiamo le NEXT_PUBLIC, sono ok per SELECT con RLS
+  const url = required(PUBLIC_URL, 'NEXT_PUBLIC_SUPABASE_URL');
+  const key = required(PUBLIC_KEY, 'NEXT_PUBLIC_SUPABASE_ANON_KEY');
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
-// Per il fallback client-side
+// fallback lato browser: usa le stesse NEXT_PUBLIC (inlined)
 export function getBrowserSupabase(): SupabaseClient {
-  const url = (process as any).env?.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = (process as any).env?.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error('Supabase env not available in browser');
+  const url = required(PUBLIC_URL, 'NEXT_PUBLIC_SUPABASE_URL');
+  const key = required(PUBLIC_KEY, 'NEXT_PUBLIC_SUPABASE_ANON_KEY');
   return createClient(url, key, { auth: { persistSession: false } });
 }
