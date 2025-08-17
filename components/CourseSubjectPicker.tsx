@@ -1,14 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { getBrowserSupabase } from '@/lib/supabase';
 
 export type PickerChange = {
   courseId: string;  courseName: string;
   subjectId: string; subjectName: string;
 };
-
 type Option = { id: string; name: string };
 
-// Rete di sicurezza: se per errore arriva una stringa JSON, estrai .id
 function normalizeId(v: string) {
   try {
     const dec = decodeURIComponent(v);
@@ -25,30 +24,66 @@ export default function CourseSubjectPicker({
 }: { value: PickerChange; onChange: (v: PickerChange) => void; }) {
   const [courses, setCourses] = useState<Option[]>([]);
   const [subjects, setSubjects] = useState<Option[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(true);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
-  // Corsi
-  useEffect(() => {
-    fetch('/api/courses', { cache: 'no-store' })
-      .then(r => r.json())
-      .then((rows: Option[]) => setCourses(Array.isArray(rows) ? rows : []))
-      .catch((err) => { console.error('courses error', err); setCourses([]); });
-  }, []);
+  // Helper: tenta API, poi fallback a Supabase client
+  async function loadCourses() {
+    setLoadingCourses(true);
+    setApiError(null);
+    try {
+      const r = await fetch('/api/courses', { cache: 'no-store' });
+      const j = await r.json();
+      if (Array.isArray(j) && j.length) {
+        setCourses(j);
+        return;
+      }
+      // fallback
+      const sb = getBrowserSupabase();
+      const { data, error } = await sb.from('courses').select('id,name').order('name', { ascending: true });
+      if (error) throw error;
+      setCourses(data ?? []);
+      if (!data?.length) setApiError('Nessun corso disponibile.');
+    } catch (e: any) {
+      setApiError(e?.message || 'Impossibile caricare i corsi.');
+      setCourses([]);
+    } finally {
+      setLoadingCourses(false);
+    }
+  }
 
-  // Materie al cambio corso
-  useEffect(() => {
-    if (!value.courseId) { setSubjects([]); return; }
+  async function loadSubjects(courseId: string) {
+    if (!courseId) { setSubjects([]); return; }
     setLoadingSubjects(true);
-    fetch(`/api/subjects?courseId=${encodeURIComponent(value.courseId)}`, { cache: 'no-store' })
-      .then(r => r.json())
-      .then((rows: Option[]) => setSubjects(Array.isArray(rows) ? rows : []))
-      .catch((err) => { console.error('subjects error', err); setSubjects([]); })
-      .finally(() => setLoadingSubjects(false));
-  }, [value.courseId]);
+    setApiError(null);
+    try {
+      const r = await fetch(`/api/subjects?courseId=${encodeURIComponent(courseId)}`, { cache: 'no-store' });
+      const j = await r.json();
+      if (Array.isArray(j) && j.length) {
+        setSubjects(j);
+        return;
+      }
+      // fallback
+      const sb = getBrowserSupabase();
+      const { data, error } = await sb
+        .from('subjects').select('id,name').eq('course_id', courseId).order('name', { ascending: true });
+      if (error) throw error;
+      setSubjects(data ?? []);
+      if (!data?.length) setApiError('Nessuna materia per il corso selezionato.');
+    } catch (e: any) {
+      setApiError(e?.message || 'Impossibile caricare le materie.');
+      setSubjects([]);
+    } finally {
+      setLoadingSubjects(false);
+    }
+  }
+
+  useEffect(() => { loadCourses(); }, []);
+  useEffect(() => { loadSubjects(value.courseId); }, [value.courseId]);
 
   return (
     <div className="grid gap-3">
-      {/* CORSO */}
       <label className="block">
         <span className="text-sm text-neutral-600">Corso di Laurea</span>
         <select
@@ -60,12 +95,11 @@ export default function CourseSubjectPicker({
           }}
           className="mt-1 w-full h-12 rounded-2xl border border-neutral-200 bg-white px-3"
         >
-          <option value="">Seleziona corso</option>
+          <option value="">{loadingCourses ? 'Carico…' : 'Seleziona corso'}</option>
           {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       </label>
 
-      {/* MATERIA */}
       <label className="block">
         <span className="text-sm text-neutral-600">Materia</span>
         <select
@@ -82,6 +116,14 @@ export default function CourseSubjectPicker({
           {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
       </label>
+
+      {apiError && (
+        <div className="text-xs text-red-600">
+          {apiError}{' '}
+          <button type="button" onClick={loadCourses} className="underline">Riprova</button>
+          {' · '}<a className="underline" href="/api/health" target="_blank">/api/health</a>
+        </div>
+      )}
     </div>
   );
 }
