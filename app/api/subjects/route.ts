@@ -25,8 +25,9 @@ export async function GET(req: Request) {
     const supabase = getSupabaseClient();
 
     if (!courseId && courseName) {
-      const { data: row, error: e2 } = await supabase.from('courses').select('id').eq('name', courseName).maybeSingle();
-      if (e2) throw e2;
+      const { data: row, error } = await supabase
+        .from('courses').select('id').eq('name', courseName).maybeSingle();
+      if (error) throw error;
       courseId = row?.id || null;
     }
 
