@@ -2,23 +2,53 @@
 import { useState } from 'react';
 import CourseSubjectPicker, { PickerChange } from '@/components/CourseSubjectPicker';
 import Button from '@/components/Button';
+import Buddy from '@/components/Buddy';
 import { useRouter } from 'next/navigation';
+import { useSessionStore } from '@/store/useSessionStore';
 
 export default function HomePage() {
   const router = useRouter();
   const [sel, setSel] = useState<PickerChange>({});
+  const startSession = useSessionStore((s) => s.startSession);
 
   const start = () => {
     if (!sel.courseId || !sel.subjectId) return;
-    router.push('/quiz'); // oppure conserva gli id nello store se ti serve
+    startSession(sel.courseId, sel.subjectId);
+    router.push('/quiz');
   };
 
   return (
-    <main className="p-4 space-y-6">
-      <CourseSubjectPicker value={sel} onChange={setSel} />
-      <Button disabled={!sel.courseId || !sel.subjectId} onClick={start}>
-        Inizia subito
-      </Button>
+    <main className="px-5 pb-28 pt-10 flex flex-col items-center">
+      {/* Titolo + Buddy */}
+      <h1 className="text-[42px] leading-tight font-black text-neutral-900 text-center">
+        Allenati con <br /> Buddy
+      </h1>
+
+      <div className="mt-6">
+        <Buddy className="w-[260px] h-[260px]" />
+      </div>
+
+      <p className="mt-6 text-[18px] text-neutral-700 text-center">
+        Puoi provare gratis un quiz completo
+      </p>
+
+      {/* Card selezioni */}
+      <section className="mt-6 w-full max-w-[680px] rounded-3xl border border-neutral-200 bg-white shadow-sm p-5">
+        <CourseSubjectPicker
+          value={sel}
+          onChange={setSel}
+        />
+
+        <div className="mt-6">
+          <Button
+            className="w-full h-14 text-[18px] rounded-2xl"
+            disabled={!sel.courseId || !sel.subjectId}
+            onClick={start}
+          >
+            Inizia subito
+          </Button>
+        </div>
+      </section>
     </main>
   );
 }
