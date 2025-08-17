@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchWithTimeout } from '@/lib/fetchWithTimeout';
@@ -20,59 +20,86 @@ function normalizeId(v: string) {
 
 export default function CourseSubjectPicker({
   initialCourses,
-}: { initialCourses: { id: string; name: string }[] }) {
+}: { initialCourses: Option[] }) {
   const router = useRouter();
   const startSession = useSessionStore(s => s.startSession);
 
   const [courses, setCourses] = useState<Option[]>(initialCourses || []);
   const [subjects, setSubjects] = useState<Option[]>([]);
-  const [courseId, setCourseId] = useState<string>('');
-  const [courseName, setCourseName] = useState<string>('');
-  const [subjectId, setSubjectId] = useState<string>('');
-  const [subjectName, setSubjectName] = useState<string>('');
+  const [courseId, setCourseId] = useState('');
+  const [courseName, setCourseName] = useState('');
+  const [subjectId, setSubjectId] = useState('');
+  const [subjectName, setSubjectName] = useState('');
 
   const [loadingCourses, setLoadingCourses] = useState(!initialCourses?.length);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
+  const [msg, setMsg] = useState<string|null>(null);
+
   const ready = Boolean(courseId && subjectId);
 
-  // In caso l’SSR fosse vuoto, prova a caricare anche lato client
+  // Se SSR non ha portato corsi, ricarica client-side (API → fallback Supabase)
   useEffect(() => {
     if (initialCourses?.length) return;
     (async () => {
-      setLoadingCourses(true);
+      setLoadingCourses(true); setMsg(null);
       try {
         const r = await fetchWithTimeout('/api/courses', { cache: 'no-store' }, 6000);
         const j = await r.json().catch(() => []);
         if (Array.isArray(j) && j.length) { setCourses(j); return; }
-        // fallback diretto Supabase
         const sb = getBrowserSupabase();
-        const { data } = await sb.from('courses').select('id,name').order('name', { ascending: true });
+        const { data, error } = await sb.from('courses').select('id,name').order('name', { ascending: true });
+        if (error) throw error;
         setCourses(data ?? []);
+        if (!data?.length) setMsg('Nessun corso disponibile.');
+      } catch (e: any) {
+        setMsg(e?.message || 'Impossibile caricare i corsi.');
       } finally {
         setLoadingCourses(false);
       }
     })();
   }, [initialCourses]);
 
-  // Materie ogni volta che cambia corso
+  // Carica materie quando cambia il corso
   useEffect(() => {
-    if (!courseId) { setSubjects([]); setSubjectId(''); setSubjectName(''); return; }
+    setSubjectId(''); setSubjectName('');
+    if (!courseId) { setSubjects([]); return; }
+
     (async () => {
-      setLoadingSubjects(true);
+      setLoadingSubjects(true); setMsg(null);
       try {
-        const r = await fetchWithTimeout(`/api/subjects?courseId=${encodeURIComponent(courseId)}`, { cache: 'no-store' }, 6000);
-        const j = await r.json().catch(() => []);
+        // 1) API con id + name (il server risolve anche se id mancante)
+        const url = `/api/subjects?courseId=${encodeURIComponent(courseId)}&courseName=${encodeURIComponent(courseName)}`;
+        const r = await fetchWithTimeout(url, { cache: 'no-store' }, 6000);
+        let j: any = [];
+        try { j = await r.json(); } catch {}
         if (Array.isArray(j) && j.length) { setSubjects(j); return; }
-        // fallback
+
+        // 2) Fallback Supabase (prima per id, poi per nome con join)
         const sb = getBrowserSupabase();
-        const { data } = await sb
-          .from('subjects').select('id,name').eq('course_id', courseId).order('name', { ascending: true });
-        setSubjects(data ?? []);
+
+        // per id
+        const byId = await sb.from('subjects').select('id,name').eq('course_id', courseId).order('name', { ascending: true });
+        if (byId.data?.length) { setSubjects(byId.data); return; }
+
+        // join per nome corso (in casi rarissimi di mismatch id)
+        const byName = await sb
+          .from('subjects')
+          .select('id,name,courses!inner(name)')
+          .eq('courses.name', courseName)
+          .order('name', { ascending: true });
+
+        if (byName.error) throw byName.error;
+        setSubjects((byName.data as any[] || []).map(({ id, name }) => ({ id, name })));
+
+        if (!(byName.data?.length)) setMsg(`Nessuna materia per “${courseName}”.`);
+      } catch (e: any) {
+        setMsg(e?.message || 'Impossibile caricare le materie.');
+        setSubjects([]);
       } finally {
         setLoadingSubjects(false);
       }
     })();
-  }, [courseId]);
+  }, [courseId, courseName]);
 
   function go() {
     if (!ready) return;
@@ -116,7 +143,9 @@ export default function CourseSubjectPicker({
           }}
           className="mt-1 w-full h-12 rounded-2xl border border-neutral-200 bg-white px-3 disabled:bg-neutral-100"
         >
-          <option value="">{loadingSubjects ? 'Carico…' : 'Seleziona materia'}</option>
+          <option value="">
+            {loadingSubjects ? 'Carico…' : (subjects.length ? 'Seleziona materia' : 'Nessuna materia disponibile')}
+          </option>
           {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
       </label>
@@ -130,6 +159,8 @@ export default function CourseSubjectPicker({
       >
         Inizia subito
       </button>
+
+      {msg && <div className="text-xs text-amber-700">{msg}</div>}
     </div>
   );
 }
