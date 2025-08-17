@@ -1,59 +1,64 @@
+// app/api/subjects/route.ts
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-export const runtime = 'nodejs';
 
-import { getSupabaseClient } from '@/lib/supabase';
+import { NextRequest } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-function extractUuidOrNull(raw: string | null) {
-  if (!raw) return null;
-  try {
-    const dec = decodeURIComponent(raw);
-    if (/^[0-9a-fA-F-]{36}$/.test(dec)) return dec;
-    const obj = JSON.parse(dec);
-    if (Array.isArray(obj) && obj[0]?.id) return String(obj[0].id);
-    if (obj && typeof obj === 'object' && 'id' in obj) return String((obj as any).id);
-  } catch {}
-  return null;
+function sb() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  return createClient(url, key, { auth: { persistSession: false } });
 }
 
-export async function GET(req: Request) {
+const isUuid = (v?: string | null) =>
+  !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  let courseId   = searchParams.get('courseId');
+  const slug     = searchParams.get('courseSlug');
+  const name     = searchParams.get('courseName');
+
+  const client = sb();
+
   try {
-    const url = new URL(req.url);
-    let courseId = extractUuidOrNull(url.searchParams.get('courseId'));
-    const courseName = url.searchParams.get('courseName') || '';
+    // Se courseId non valido, prova a risolvere tramite slug o name
+    if (!isUuid(courseId)) {
+      let q = client.from('courses').select('id').limit(1);
+      if (slug) q = q.eq('slug', slug);
+      else if (name) q = q.eq('name', name);
+      else return new Response(JSON.stringify([]), {
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+      });
 
-    const supabase = getSupabaseClient();
-
-    // Se manca l'ID ma abbiamo il nome, lo risolviamo qui (evita 0 risultati)
-    if (!courseId && courseName) {
-      const { data: row, error } = await supabase
-        .from('courses')
-        .select('id')
-        .eq('name', courseName)
-        .maybeSingle();
-      if (error) throw error;
-      courseId = row?.id ?? null;
+      const { data: cRow, error: cErr } = await q.maybeSingle();
+      if (cErr) {
+        return new Response(JSON.stringify({ error: cErr.message }), { status: 400 });
+      }
+      courseId = cRow?.id ?? null;
     }
 
-    if (!courseId) {
+    if (!isUuid(courseId)) {
       return new Response(JSON.stringify([]), {
         headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
       });
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('subjects')
-      .select('id,name')
+      .select('id,name,slug')
       .eq('course_id', courseId)
-      .order('name', { ascending: true });
+      .order('name');
 
-    if (error) throw error;
+    if (error) {
+      return new Response(JSON.stringify({ error: error.message }), { status: 400 });
+    }
 
     return new Response(JSON.stringify(data ?? []), {
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     });
   } catch (e: any) {
-    console.warn('[api/subjects] error:', e?.message || e);
-    return new Response(JSON.stringify({ error: String(e?.message || e) }), { status: 400 });
+    return new Response(JSON.stringify({ error: String(e?.message || e) }), { status: 500 });
   }
 }
