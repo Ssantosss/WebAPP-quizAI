@@ -1,17 +1,18 @@
 const securityHeaders = [
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'Permissions-Policy', value: 'camera=(), geolocation=(), microphone=()' },
   {
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "img-src 'self' data: https:",
-      "script-src 'self'",
+      "img-src 'self' data: https: blob:",
       "style-src 'self' 'unsafe-inline'",
-      "connect-src 'self' https://api.deepseek.com https://generativelanguage.googleapis.com https://api.stripe.com",
+      "script-src 'self' 'unsafe-inline'",
+      "connect-src 'self' https://api.deepseek.com https://generativelanguage.googleapis.com https://api.stripe.com https://*.supabase.co https://*.supabase.in",
       "frame-src https://js.stripe.com https://hooks.stripe.com",
     ].join('; ')
   },
-  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  { key: 'Permissions-Policy', value: 'camera=(self)' },
 ];
 
 module.exports = {
