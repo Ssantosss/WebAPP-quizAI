@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchWithTimeout } from '@/lib/fetchWithTimeout';
@@ -18,9 +18,9 @@ function normalizeId(v: string) {
   return v;
 }
 
-export default function CourseSubjectPickerClient({
+export default function CourseSubjectPicker({
   initialCourses,
-}: { initialCourses: Option[] }) {
+}: { initialCourses: { id: string; name: string }[] }) {
   const router = useRouter();
   const startSession = useSessionStore(s => s.startSession);
 
