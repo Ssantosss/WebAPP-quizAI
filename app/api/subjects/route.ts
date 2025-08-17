@@ -32,7 +32,9 @@ export async function GET(req: Request) {
     }
 
     if (!courseId) {
-      return new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify([]), {
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+      });
     }
 
     const { data, error } = await supabase
@@ -48,6 +50,9 @@ export async function GET(req: Request) {
     });
   } catch (e: any) {
     console.warn('[api/subjects] error:', e?.message || e);
-    return new Response(JSON.stringify({ error: String(e?.message || e) }), { status: 400 });
+    return new Response(JSON.stringify({ error: String(e?.message || e) }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    });
   }
 }

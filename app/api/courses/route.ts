@@ -14,6 +14,9 @@ export async function GET() {
     });
   } catch (e: any) {
     console.warn('[api/courses] error:', e?.message || e);
-    return new Response(JSON.stringify({ error: String(e?.message || e) }), { status: 400 });
+    return new Response(JSON.stringify({ error: String(e?.message || e) }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    });
   }
 }
