@@ -9,7 +9,7 @@ function extractCourseId(raw: string | null) {
   const dec = decodeURIComponent(raw);
   // UUID classico?
   if (/^[0-9a-fA-F-]{36}$/.test(dec)) return dec;
-  // In caso arrivasse JSON, prendi .id
+  // Se arriva accidentalmente JSON, prova a prendere .id
   try {
     const obj = JSON.parse(dec);
     if (Array.isArray(obj) && obj[0]?.id) return String(obj[0].id);
@@ -26,7 +26,7 @@ export async function GET(req: Request) {
 
     const supabase = getSupabaseClient();
 
-    // Fallback: se non c'è l'UUID ma abbiamo il nome, risolvi l'ID
+    // Fallback: se non c'è UUID ma abbiamo il nome corso, risolvi l'id
     if (!courseId && courseName) {
       const { data: row, error: cErr } = await supabase
         .from('courses')
@@ -46,7 +46,6 @@ export async function GET(req: Request) {
       .select('id,name')
       .eq('course_id', courseId)
       .order('name', { ascending: true });
-
     if (error) throw error;
 
     return new Response(JSON.stringify(data ?? []), {
