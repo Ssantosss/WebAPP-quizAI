@@ -4,11 +4,11 @@ export const runtime = 'nodejs';
 
 import { getSupabaseClient } from '@/lib/supabase';
 
-function extractCourseId(raw: string | null) {
+function extractUuidOrNull(raw: string | null) {
   if (!raw) return null;
-  const dec = decodeURIComponent(raw);
-  if (/^[0-9a-fA-F-]{36}$/.test(dec)) return dec;
   try {
+    const dec = decodeURIComponent(raw);
+    if (/^[0-9a-fA-F-]{36}$/.test(dec)) return dec;
     const obj = JSON.parse(dec);
     if (Array.isArray(obj) && obj[0]?.id) return String(obj[0].id);
     if (obj && typeof obj === 'object' && 'id' in obj) return String((obj as any).id);
@@ -19,16 +19,20 @@ function extractCourseId(raw: string | null) {
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    let courseId = extractCourseId(url.searchParams.get('courseId'));
-    const courseName = url.searchParams.get('courseName');
+    let courseId = extractUuidOrNull(url.searchParams.get('courseId'));
+    const courseName = url.searchParams.get('courseName') || '';
 
     const supabase = getSupabaseClient();
 
+    // Se manca l'ID ma abbiamo il nome, lo risolviamo qui (evita 0 risultati)
     if (!courseId && courseName) {
       const { data: row, error } = await supabase
-        .from('courses').select('id').eq('name', courseName).maybeSingle();
+        .from('courses')
+        .select('id')
+        .eq('name', courseName)
+        .maybeSingle();
       if (error) throw error;
-      courseId = row?.id || null;
+      courseId = row?.id ?? null;
     }
 
     if (!courseId) {
@@ -50,9 +54,6 @@ export async function GET(req: Request) {
     });
   } catch (e: any) {
     console.warn('[api/subjects] error:', e?.message || e);
-    return new Response(JSON.stringify({ error: String(e?.message || e) }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-    });
+    return new Response(JSON.stringify({ error: String(e?.message || e) }), { status: 400 });
   }
 }
