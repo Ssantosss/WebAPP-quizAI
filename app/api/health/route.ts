@@ -1,28 +1,26 @@
+// app/api/health/route.ts
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-export const runtime = 'nodejs';
 
-import { getSupabaseClient } from '@/lib/supabase';
+import { NextResponse } from 'next/server';
+import { supaServer } from '@/lib/supabaseServer';
 
 export async function GET() {
-  try {
-    const supabase = getSupabaseClient();
-
-    const { count: coursesCount, error: cErr } = await supabase
-      .from('courses').select('*', { count: 'exact', head: true });
-    const { count: subjectsCount, error: sErr } = await supabase
-      .from('subjects').select('*', { count: 'exact', head: true });
-
-    return new Response(JSON.stringify({
-      ok: !cErr && !sErr,
-      env: {
-        hasUrl: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
-        hasKey: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
-      },
-      counts: { courses: coursesCount ?? 0, subjects: subjectsCount ?? 0 },
-      errors: { courses: cErr?.message ?? null, subjects: sErr?.message ?? null },
-    }), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
-  } catch (e: any) {
-    return new Response(JSON.stringify({ ok: false, error: String(e?.message || e) }), { status: 400 });
-  }
+  const svc = supaServer({ service: true });
+  const [c, s] = await Promise.all([
+    svc.from('courses').select('id', { head: true, count: 'exact' }),
+    svc.from('subjects').select('id', { head: true, count: 'exact' }),
+  ]);
+  return NextResponse.json(
+    {
+      ok: !c.error && !s.error,
+      courses: c.count ?? 0,
+      subjects: s.count ?? 0,
+      usesService: true,
+      errCourses: c.error?.message,
+      errSubjects: s.error?.message,
+    },
+    { headers: { 'Cache-Control': 'no-store' } }
+  );
 }
