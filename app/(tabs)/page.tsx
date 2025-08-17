@@ -6,6 +6,7 @@ import BuddyHero from '@/components/BuddyHero';
 import CourseSubjectPicker, { PickerChange } from '@/components/CourseSubjectPicker';
 import { useSessionStore } from '@/store/useSessionStore';
 
+// compat: accetta anche eventuali vecchi campi (course/subject)
 type AnySel = PickerChange & { course?: string; subject?: string };
 
 function isReady(sel: AnySel) {
@@ -21,9 +22,12 @@ function getNames(sel: AnySel) {
 export default function HomePage() {
   const router = useRouter();
   const startSession = useSessionStore(s => s.startSession);
-  const [sel, setSel] = useState<AnySel>({ courseId: '', courseName: '', subjectId: '', subjectName: '' });
+  const [sel, setSel] = useState<AnySel>({
+    courseId: '', courseName: '', subjectId: '', subjectName: ''
+  });
 
   const ready = isReady(sel);
+
   const go = () => {
     if (!ready) return;
     const { courseName, subjectName } = getNames(sel);
