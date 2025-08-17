@@ -1,5 +1,6 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { getBrowserSupabase } from '@/lib/supabase.client';
 
 export type PickerChange = {
   courseId: string;  courseName: string;
@@ -8,7 +9,6 @@ export type PickerChange = {
 
 type Option = { id: string; name: string };
 
-// Rete di sicurezza: se per errore arrivasse una stringa JSON, estrai .id
 function normalizeId(v: string) {
   try {
     const dec = decodeURIComponent(v);
@@ -26,29 +26,74 @@ export default function CourseSubjectPicker({
   const [courses, setCourses] = useState<Option[]>([]);
   const [subjects, setSubjects] = useState<Option[]>([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
+  const [loadErr, setLoadErr] = useState<string | null>(null);
 
-  // Corsi
+  // Carica corsi: prima provo Supabase client → se fallisce, fallback API
   useEffect(() => {
-    fetch('/api/courses', { cache: 'no-store' })
-      .then(r => r.json())
-      .then((rows: Option[]) => setCourses(Array.isArray(rows) ? rows : []))
-      .catch((err) => { console.error('courses error', err); setCourses([]); });
+    (async () => {
+      setLoadErr(null);
+      const supabase = getBrowserSupabase();
+      try {
+        if (supabase) {
+          const { data, error } = await supabase
+            .from('courses')
+            .select('id,name')
+            .order('name', { ascending: true });
+          if (error) throw error;
+          if (Array.isArray(data) && data.length) { setCourses(data as Option[]); return; }
+        }
+        // fallback API
+        const r = await fetch('/api/courses', { cache: 'no-store' });
+        const j = await r.json();
+        setCourses(Array.isArray(j) ? j : []);
+        if (!Array.isArray(j)) setLoadErr(j?.error ?? 'Errore caricamento corsi');
+      } catch (e: any) {
+        console.error('courses error', e);
+        setLoadErr(String(e?.message || e));
+        setCourses([]);
+      }
+    })();
   }, []);
 
-  // Materie al cambio corso
+  // Carica materie quando cambia il corso selezionato
   useEffect(() => {
-    if (!value.courseId) { setSubjects([]); return; }
-    setLoadingSubjects(true);
-    fetch(`/api/subjects?courseId=${encodeURIComponent(value.courseId)}`, { cache: 'no-store' })
-      .then(r => r.json())
-      .then((rows: Option[]) => setSubjects(Array.isArray(rows) ? rows : []))
-      .catch((err) => { console.error('subjects error', err); setSubjects([]); })
-      .finally(() => setLoadingSubjects(false));
+    (async () => {
+      if (!value.courseId) { setSubjects([]); return; }
+      setLoadingSubjects(true);
+      setLoadErr(null);
+      const supabase = getBrowserSupabase();
+      try {
+        if (supabase) {
+          const { data, error } = await supabase
+            .from('subjects')
+            .select('id,name')
+            .eq('course_id', value.courseId)
+            .order('name', { ascending: true });
+          if (error) throw error;
+          if (Array.isArray(data)) { setSubjects(data as Option[]); return; }
+        }
+        // fallback API
+        const r = await fetch(`/api/subjects?courseId=${encodeURIComponent(value.courseId)}`, { cache: 'no-store' });
+        const j = await r.json();
+        setSubjects(Array.isArray(j) ? j : []);
+        if (!Array.isArray(j)) setLoadErr(j?.error ?? 'Errore caricamento materie');
+      } catch (e: any) {
+        console.error('subjects error', e);
+        setLoadErr(String(e?.message || e));
+        setSubjects([]);
+      } finally {
+        setLoadingSubjects(false);
+      }
+    })();
   }, [value.courseId]);
+
+  const showDebug = useMemo(
+    () => typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('dbg'),
+    []
+  );
 
   return (
     <div className="grid gap-3">
-      {/* CORSO */}
       <label className="block">
         <span className="text-sm text-neutral-600">Corso di Laurea</span>
         <select
@@ -65,7 +110,6 @@ export default function CourseSubjectPicker({
         </select>
       </label>
 
-      {/* MATERIA */}
       <label className="block">
         <span className="text-sm text-neutral-600">Materia</span>
         <select
@@ -82,6 +126,13 @@ export default function CourseSubjectPicker({
           {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
       </label>
+
+      {showDebug && loadErr && (
+        <p className="text-xs text-red-600">Debug: {loadErr}</p>
+      )}
+      {showDebug && !loadErr && courses.length === 0 && (
+        <p className="text-xs text-amber-600">Debug: nessun corso dal client né dalle API</p>
+      )}
     </div>
   );
 }
