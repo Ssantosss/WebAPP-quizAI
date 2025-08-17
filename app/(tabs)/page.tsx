@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import CourseSubjectPicker, { PickerChange } from '@/components/CourseSubjectPicker';
+import CourseSubjectPicker, { PickerValue } from '@/components/CourseSubjectPicker';
 import Button from '@/components/Button';
 import Buddy from '@/components/Buddy';
 import { useRouter } from 'next/navigation';
@@ -8,12 +8,14 @@ import { useSessionStore } from '@/store/useSessionStore';
 
 export default function HomePage() {
   const router = useRouter();
-  const [sel, setSel] = useState<PickerChange>({});
+  const [sel, setSel] = useState<PickerValue>({ course: undefined, subject: undefined });
   const startSession = useSessionStore((s) => s.startSession);
 
+  const canStart = !!sel.course && !!sel.subject;
+
   const start = () => {
-    if (!sel.courseId || !sel.subjectId) return;
-    startSession(sel.courseId, sel.subjectId);
+    if (!canStart) return;
+    startSession(sel.course!, sel.subject!);
     router.push('/quiz');
   };
 
@@ -42,7 +44,7 @@ export default function HomePage() {
         <div className="mt-6">
           <Button
             className="w-full h-14 text-[18px] rounded-2xl"
-            disabled={!sel.courseId || !sel.subjectId}
+            disabled={!canStart}
             onClick={start}
           >
             Inizia subito
