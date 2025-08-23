@@ -1,52 +1,70 @@
-'use client'
-import { useCourses } from '@/hooks/useCourses'
-import { useSubjects } from '@/hooks/useSubjects'
+"use client";
 
-type Value = { courseId?: string; subjectId?: string }
-export type PickerValue = Value
+import { useCourses } from "@/hooks/useCourses";
+import { useSubjects } from "@/hooks/useSubjects";
 
-type Props = { value: Value; onChange: (v: Value) => void }
+export type PickerValue = { courseId?: string; subjectId?: string };
 
-export default function CourseSubjectPicker({ value, onChange }: Props) {
-  const { data: courses, loading: loadingC } = useCourses()
-  const { data: subjects, loading: loadingS } = useSubjects(value.courseId)
-  const canPickSubject = !!value.courseId
+export default function CourseSubjectPicker({
+  value,
+  onChange,
+}: {
+  value: PickerValue;
+  onChange: (v: PickerValue) => void;
+}) {
+  const { data: courses, loading: loadingC } = useCourses();
+  const { data: subjects, loading: loadingS } = useSubjects(value.courseId);
+
+  const noCourses = !loadingC && courses.length === 0;
+  const noSubjects = !!value.courseId && !loadingS && subjects.length === 0;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      {/* Corso di Laurea (classi/stile della tua UI) */}
       <div>
         <label className="block mb-2 text-neutral-700 text-[15px]">Corso di Laurea</label>
         <select
           className="w-full h-14 rounded-2xl border border-neutral-200 bg-white px-4 text-[16px] focus:outline-none focus:ring-2 focus:ring-[#176d46]/25"
-          value={value.courseId ?? ''}
+          value={value.courseId ?? ""}
           onChange={(e) => onChange({ courseId: e.target.value || undefined, subjectId: undefined })}
         >
-          <option value="">
-            {loadingC ? 'Carico…' : (courses.length ? 'Seleziona corso' : 'Nessun corso disponibile')}
+          <option value="" disabled hidden>
+            {loadingC ? "Carico…" : (noCourses ? "Nessun corso disponibile" : "Seleziona corso")}
           </option>
-          {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {(!value.courseId) && (
+            <option value="">
+              {loadingC ? "Carico…" : (noCourses ? "Nessun corso disponibile" : "Seleziona corso")}
+            </option>
+          )}
+          {courses.map(c => (<option key={c.id} value={c.id}>{c.name}</option>))}
         </select>
       </div>
 
+      {/* Materia (classi/stile della tua UI) */}
       <div>
         <label className="block mb-2 text-neutral-700 text-[15px]">Materia</label>
         <select
-          className="w-full h-14 rounded-2xl border border-neutral-200 bg-white px-4 text-[16px] disabled:bg-neutral-50 disabled:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#176d46]/25"
-          value={value.subjectId ?? ''}
+          key={value.courseId ?? "no-course"}   // reset quando cambia corso
+          className="w-full h-14 rounded-2xl border border-neutral-200 bg-white px-4 text-[16px] focus:outline-none focus:ring-2 focus:ring-[#176d46]/25 disabled:bg-neutral-100 disabled:text-neutral-400"
+          value={value.subjectId ?? ""}
+          disabled={!value.courseId || loadingS || noSubjects}
           onChange={(e) => onChange({ ...value, subjectId: e.target.value || undefined })}
-          disabled={!canPickSubject}
         >
-          {!canPickSubject && <option value="">Seleziona corso prima</option>}
-          {canPickSubject && (
-            <>
-              <option value="">
-                {loadingS ? 'Carico…' : (subjects.length ? 'Seleziona materia' : 'Nessuna materia disponibile')}
-              </option>
-              {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </>
+          <option value="" disabled hidden>
+            {!value.courseId
+              ? "Seleziona corso prima"
+              : loadingS
+              ? "Carico…"
+              : noSubjects
+              ? "Nessuna materia disponibile"
+              : "Seleziona materia"}
+          </option>
+          {(!value.courseId || noSubjects) && (
+            <option value="">{!value.courseId ? "Seleziona corso prima" : "Nessuna materia disponibile"}</option>
           )}
+          {subjects.map(s => (<option key={s.id} value={s.id}>{s.name}</option>))}
         </select>
       </div>
     </div>
-  )
+  );
 }

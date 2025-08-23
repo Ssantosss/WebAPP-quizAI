@@ -1,25 +1,22 @@
-'use client'
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import type { Subject } from '@/types/db'
+"use client";
+import { useEffect, useState } from "react";
+
+export type Subject = { id: string; name: string; course_id: string };
 
 export function useSubjects(courseId?: string) {
-  const [data, setData] = useState<Subject[]>([])
-  const [loading, setLoading] = useState(false)
+  const [data, setData] = useState<Subject[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    let off = false
-    if (!courseId) { setData([]); setLoading(false); return }
-    setLoading(true)
-    supabase
-      .from('subjects')
-      .select('id,name,course_id')
-      .eq('course_id', courseId)
-      .order('name', { ascending: true })
-      .then(({ data }) => !off && setData(data ?? []))
-      .finally(() => !off && setLoading(false))
-    return () => { off = true }
-  }, [courseId])
+    let alive = true;
+    if (!courseId) { setData([]); setLoading(false); return; }
+    setLoading(true);
+    fetch(`/api/subjects?courseId=${encodeURIComponent(courseId)}`, { cache: "no-store" })
+      .then(r => r.json())
+      .then(j => { if (alive) setData(Array.isArray(j.subjects) ? j.subjects : []); })
+      .finally(() => alive && setLoading(false));
+    return () => { alive = false; };
+  }, [courseId]);
 
-  return { data, loading }
+  return { data, loading };
 }
