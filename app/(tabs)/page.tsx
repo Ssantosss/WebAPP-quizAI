@@ -1,9 +1,11 @@
 'use client';
 import { useState } from 'react';
-import CourseSubjectPicker, { PickerValue } from '@/components/CourseSubjectPicker';
+import CourseSubjectPicker from '@/components/CourseSubjectPicker';
 import Button from '@/components/Button';
 import Buddy from '@/components/Buddy';
 import { useRouter } from 'next/navigation';
+
+type PickerValue = { courseId?: string; subjectId?: string };
 
 export default function HomePage() {
   const router = useRouter();
