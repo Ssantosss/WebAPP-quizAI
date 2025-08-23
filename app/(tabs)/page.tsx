@@ -4,19 +4,16 @@ import CourseSubjectPicker, { PickerValue } from '@/components/CourseSubjectPick
 import Button from '@/components/Button';
 import Buddy from '@/components/Buddy';
 import { useRouter } from 'next/navigation';
-import { useSessionStore } from '@/store/useSessionStore';
 
 export default function HomePage() {
   const router = useRouter();
-  const [sel, setSel] = useState<PickerValue>({}); // { courseId?, subjectId? }
-  const startSession = useSessionStore((s) => s.startSession);
+  const [sel, setSel] = useState<PickerValue>({});
 
   const canStart = !!sel.courseId && !!sel.subjectId;
 
   const start = () => {
     if (!canStart) return;
-    startSession(sel.courseId!, sel.subjectId!);
-    router.push('/quiz');
+    router.push(`/quiz?courseId=${sel.courseId}&subjectId=${sel.subjectId}`);
   };
 
   return (
