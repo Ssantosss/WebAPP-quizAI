@@ -35,10 +35,7 @@ export default function HomePage() {
 
       {/* Card selezioni */}
       <section className="mt-6 w-full max-w-[680px] rounded-3xl border border-neutral-200 bg-white shadow-sm p-5">
-        <CourseSubjectPicker
-          value={sel}
-          onChange={setSel}
-        />
+        <CourseSubjectPicker onChange={setSel} />
 
         <div className="mt-6">
           <Button
