@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchCourses, fetchSubjects, type Course, type Subject } from "@/lib/supaRest";
+import { getCourses, getSubjects, type Course, type Subject } from "@/lib/api";
 
-export type PickerValue = { courseId?: string; subjectId?: string };
+type PickerValue = { courseId?: string; subjectId?: string };
 
 export default function CourseSubjectPicker({
   value,
@@ -23,8 +23,8 @@ export default function CourseSubjectPicker({
     (async () => {
       try {
         setLoadingC(true);
-        const data = await fetchCourses();
-        if (alive) setCourses(data ?? []);
+        const data = await getCourses();
+        if (alive) setCourses(Array.isArray(data) ? data : []);
       } catch (e) {
         console.error("Errore caricamento corsi:", e);
         if (alive) setCourses([]);
@@ -37,7 +37,7 @@ export default function CourseSubjectPicker({
     };
   }, []);
 
-  // Carica materie al cambio corso
+  // Carica materie quando cambia il corso
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -47,8 +47,8 @@ export default function CourseSubjectPicker({
       }
       try {
         setLoadingS(true);
-        const data = await fetchSubjects(value.courseId);
-        if (alive) setSubjects(data ?? []);
+        const data = await getSubjects(value.courseId);
+        if (alive) setSubjects(Array.isArray(data) ? data : []);
       } catch (e) {
         console.error("Errore caricamento materie:", e);
         if (alive) setSubjects([]);
