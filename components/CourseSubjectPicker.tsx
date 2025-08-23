@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { getCourses, getSubjects, type Course, type Subject } from "@/lib/api";
 
 type PickerValue = { courseId?: string; subjectId?: string };
-
 export default function CourseSubjectPicker({
   value,
   onChange,
@@ -17,7 +16,6 @@ export default function CourseSubjectPicker({
   const [loadingC, setLoadingC] = useState(true);
   const [loadingS, setLoadingS] = useState(false);
 
-  // Carica corsi
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -26,7 +24,7 @@ export default function CourseSubjectPicker({
         const data = await getCourses();
         if (alive) setCourses(Array.isArray(data) ? data : []);
       } catch (e) {
-        console.error("Errore caricamento corsi:", e);
+        console.error("Errore corsi:", e);
         if (alive) setCourses([]);
       } finally {
         if (alive) setLoadingC(false);
@@ -37,7 +35,6 @@ export default function CourseSubjectPicker({
     };
   }, []);
 
-  // Carica materie quando cambia il corso
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -50,7 +47,7 @@ export default function CourseSubjectPicker({
         const data = await getSubjects(value.courseId);
         if (alive) setSubjects(Array.isArray(data) ? data : []);
       } catch (e) {
-        console.error("Errore caricamento materie:", e);
+        console.error("Errore materie:", e);
         if (alive) setSubjects([]);
       } finally {
         if (alive) setLoadingS(false);
@@ -66,7 +63,6 @@ export default function CourseSubjectPicker({
 
   return (
     <div className="space-y-6">
-      {/* Corso di Laurea */}
       <div>
         <label className="block mb-2 text-neutral-700 text-[15px]">Corso di Laurea</label>
         <select
@@ -85,7 +81,6 @@ export default function CourseSubjectPicker({
         </select>
       </div>
 
-      {/* Materia */}
       <div>
         <label className="block mb-2 text-neutral-700 text-[15px]">Materia</label>
         <select
