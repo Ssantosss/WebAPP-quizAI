@@ -1,4 +1,5 @@
 import { supabaseBrowser } from "@/lib/supabase/browser";
+import type { PostgrestResponse } from "@supabase/supabase-js";
 
 export type Course = { id: string; name: string };
 export type Subject = { id: string; name: string; course_id: string };
@@ -12,25 +13,27 @@ async function withTimeout<T>(p: Promise<T>, ms = 3500): Promise<T> {
 
 export async function loadCourses(): Promise<Course[]> {
   const sb = supabaseBrowser();
-  const { data, error } = await withTimeout(
+
+  // Tipizziamo esplicitamente la risposta del client Supabase
+  const res = await withTimeout<PostgrestResponse<Course>>(
     sb.from("courses").select("id,name").order("name", { ascending: true })
   );
-  if (error) throw error;
-  return data ?? [];
+
+  if (res.error) throw res.error;
+  return res.data ?? [];
 }
 
 export async function loadSubjects(courseId: string): Promise<Subject[]> {
   const sb = supabaseBrowser();
-  const { data, error } = await withTimeout(
+
+  const res = await withTimeout<PostgrestResponse<Subject>>(
     sb
       .from("subjects")
       .select("id,name,course_id")
       .eq("course_id", courseId)
       .order("name", { ascending: true })
   );
-  if (error) throw error;
-  return data ?? [];
-}
 
-// RLS hardening: ensure only SELECT policies exist
-// -- NON creare policy di INSERT/UPDATE/DELETE
+  if (res.error) throw res.error;
+  return res.data ?? [];
+}
