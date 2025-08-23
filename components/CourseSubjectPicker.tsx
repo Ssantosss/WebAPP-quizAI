@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getCourses, getSubjects, type Course, type Subject } from "@/lib/api";
+import { useEffect, useState, useCallback } from "react";
+import { loadCourses, loadSubjects, type Course, type Subject } from "@/lib/fetchers";
 
 type PickerValue = { courseId?: string; subjectId?: string };
+
 export default function CourseSubjectPicker({
   value,
   onChange,
@@ -16,71 +17,62 @@ export default function CourseSubjectPicker({
   const [loadingC, setLoadingC] = useState(true);
   const [loadingS, setLoadingS] = useState(false);
 
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        setLoadingC(true);
-        const data = await getCourses();
-        if (alive) setCourses(Array.isArray(data) ? data : []);
-      } catch (e) {
-        console.error("Errore corsi:", e);
-        if (alive) setCourses([]);
-      } finally {
-        if (alive) setLoadingC(false);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
+  const fetchCourses = useCallback(async () => {
+    try {
+      setLoadingC(true);
+      const data = await loadCourses();
+      setCourses(data);
+    } catch (e) {
+      console.error("Errore caricamento corsi:", e);
+      setCourses([]);
+    } finally {
+      setLoadingC(false);
+    }
   }, []);
 
+  const fetchSubjects = useCallback(async (courseId: string) => {
+    try {
+      setLoadingS(true);
+      const data = await loadSubjects(courseId);
+      setSubjects(data);
+    } catch (e) {
+      console.error("Errore caricamento materie:", e);
+      setSubjects([]);
+    } finally {
+      setLoadingS(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchCourses(); }, [fetchCourses]);
   useEffect(() => {
-    let alive = true;
-    (async () => {
-      if (!value.courseId) {
-        setSubjects([]);
-        return;
-      }
-      try {
-        setLoadingS(true);
-        const data = await getSubjects(value.courseId);
-        if (alive) setSubjects(Array.isArray(data) ? data : []);
-      } catch (e) {
-        console.error("Errore materie:", e);
-        if (alive) setSubjects([]);
-      } finally {
-        if (alive) setLoadingS(false);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [value.courseId]);
+    if (!value.courseId) { setSubjects([]); return; }
+    fetchSubjects(value.courseId);
+  }, [value.courseId, fetchSubjects]);
 
   const noCourses = !loadingC && courses.length === 0;
   const noSubjects = !!value.courseId && !loadingS && subjects.length === 0;
 
   return (
     <div className="space-y-6">
+      {/* CORSO (selettore, nessun input libero) */}
       <div>
         <label className="block mb-2 text-neutral-700 text-[15px]">Corso di Laurea</label>
         <select
           className="w-full h-14 rounded-2xl border border-neutral-200 bg-white px-4 text-[16px] focus:outline-none focus:ring-2 focus:ring-[#176d46]/25"
           value={value.courseId ?? ""}
           onChange={(e) => onChange({ courseId: e.target.value || undefined, subjectId: undefined })}
+          onBlur={() => { if (!loadingC && courses.length === 0) fetchCourses(); }}
         >
           <option value="">
             {loadingC ? "Carico…" : noCourses ? "Nessun corso disponibile" : "Seleziona corso"}
           </option>
           {courses.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
+            <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
       </div>
 
+      {/* MATERIA (bloccato finché non c’è il corso) */}
       <div>
         <label className="block mb-2 text-neutral-700 text-[15px]">Materia</label>
         <select
@@ -89,6 +81,7 @@ export default function CourseSubjectPicker({
           value={value.subjectId ?? ""}
           disabled={!value.courseId || loadingS || noSubjects}
           onChange={(e) => onChange({ ...value, subjectId: e.target.value || undefined })}
+          onBlur={() => { if (value.courseId && !loadingS && subjects.length === 0) fetchSubjects(value.courseId); }}
         >
           <option value="">
             {!value.courseId
@@ -100,9 +93,7 @@ export default function CourseSubjectPicker({
               : "Seleziona materia"}
           </option>
           {subjects.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
+            <option key={s.id} value={s.id}>{s.name}</option>
           ))}
         </select>
       </div>
