@@ -30,11 +30,11 @@ Se **non esiste già**, crea `app/api/health/route.ts` per un controllo rapido:
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-import { getSupabaseClient } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 export async function GET() {
   try {
-    const sb = getSupabaseClient();
+    const sb = supabase;
 
     const { count: coursesCount } = await sb.from('courses').select('id', { count: 'exact', head: true });
     const { count: subjectsCount } = await sb.from('subjects').select('id', { count: 'exact', head: true });

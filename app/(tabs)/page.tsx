@@ -8,14 +8,14 @@ import { useSessionStore } from '@/store/useSessionStore';
 
 export default function HomePage() {
   const router = useRouter();
-  const [sel, setSel] = useState<PickerValue>({ course: undefined, subject: undefined });
+  const [sel, setSel] = useState<PickerValue>({ courseId: undefined, subjectId: undefined });
   const startSession = useSessionStore((s) => s.startSession);
 
-  const canStart = !!sel.course && !!sel.subject;
+  const canStart = !!sel.courseId && !!sel.subjectId;
 
   const start = () => {
     if (!canStart) return;
-    startSession(sel.course!, sel.subject!);
+    startSession(sel.courseId!, sel.subjectId!);
     router.push('/quiz');
   };
 
