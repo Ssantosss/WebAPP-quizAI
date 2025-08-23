@@ -1,26 +1,30 @@
 // app/api/health/route.ts
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+import { NextResponse } from "next/server";
+import { getServerSupabase } from "@/lib/supabaseServer";
+
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-import { NextResponse } from 'next/server';
-import { supaServer } from '@/lib/supabaseServer';
-
 export async function GET() {
-  const svc = supaServer({ service: true });
-  const [c, s] = await Promise.all([
-    svc.from('courses').select('id', { head: true, count: 'exact' }),
-    svc.from('subjects').select('id', { head: true, count: 'exact' }),
-  ]);
-  return NextResponse.json(
-    {
-      ok: !c.error && !s.error,
-      courses: c.count ?? 0,
-      subjects: s.count ?? 0,
-      usesService: true,
-      errCourses: c.error?.message,
-      errSubjects: s.error?.message,
-    },
-    { headers: { 'Cache-Control': 'no-store' } }
-  );
+  try {
+    const supabase = getServerSupabase();
+    const { count: coursesCount } = await supabase
+      .from("courses")
+      .select("id", { count: "exact", head: true });
+
+    const { count: subjectsCount } = await supabase
+      .from("subjects")
+      .select("id", { count: "exact", head: true });
+
+    return NextResponse.json({
+      ok: true,
+      env: {
+        hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        hasAnon: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      },
+      counts: { courses: coursesCount ?? 0, subjects: subjectsCount ?? 0 },
+    });
+  } catch (e: any) {
+    return NextResponse.json({ ok: false, error: String(e?.message ?? e) }, { status: 500 });
+  }
 }

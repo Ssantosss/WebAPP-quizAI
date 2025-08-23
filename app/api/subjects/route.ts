@@ -1,43 +1,30 @@
 // app/api/subjects/route.ts
 import { NextResponse } from "next/server";
+import { getServerSupabase } from "@/lib/supabaseServer";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const courseId = searchParams.get("courseId");
-
   if (!courseId) {
-    return NextResponse.json(
-      { ok: false, reason: "missing courseId" },
-      { status: 400 }
-    );
+    return NextResponse.json({ ok: false, error: "missing courseId" }, { status: 400 });
   }
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !key) {
-    return NextResponse.json(
-      { ok: false, reason: "missing env", hasUrl: !!url, hasKey: !!key },
-      { status: 500 }
-    );
-  }
-
-  const r = await fetch(
-    `${url}/rest/v1/subjects?select=id,name,course_id&course_id=eq.${courseId}&order=name.asc`,
-    {
-      headers: { apikey: key, Authorization: `Bearer ${key}` },
-      cache: "no-store",
-      next: { revalidate: 0 },
-    }
-  );
-
-  const text = await r.text();
   try {
-    const json = JSON.parse(text);
-    return NextResponse.json(json, { status: r.ok ? 200 : 500 });
-  } catch {
-    return NextResponse.json({ ok: r.ok, raw: text }, { status: r.ok ? 200 : 500 });
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from("subjects")
+      .select("id,name,course_id")
+      .eq("course_id", courseId)
+      .order("name", { ascending: true });
+
+    if (error) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    }
+    return NextResponse.json(data ?? [], { status: 200 });
+  } catch (e: any) {
+    return NextResponse.json({ ok: false, error: String(e?.message ?? e) }, { status: 500 });
   }
 }
