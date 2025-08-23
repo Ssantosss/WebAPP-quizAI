@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 type Course = { id: string; name: string };
 type Subject = { id: string; name: string; course_id: string };
@@ -19,27 +20,57 @@ export default function CourseSubjectPicker({
   const [loadingC, setLoadingC] = useState(true);
   const [loadingS, setLoadingS] = useState(false);
 
+  // Carica corsi
   useEffect(() => {
     let alive = true;
-    setLoadingC(true);
-    fetch("/api/courses", { cache: "no-store" })
-      .then(r => r.json())
-      .then(j => { if (alive) setCourses(Array.isArray(j.courses) ? j.courses : []); })
-      .catch(() => setCourses([]))
-      .finally(() => alive && setLoadingC(false));
-    return () => { alive = false; };
+    (async () => {
+      try {
+        setLoadingC(true);
+        const { data, error } = await supabase
+          .from("courses")
+          .select("id,name")
+          .order("name", { ascending: true });
+        if (error) throw error;
+        if (alive) setCourses(data ?? []);
+      } catch (e) {
+        console.error("load courses failed:", e);
+        if (alive) setCourses([]);
+      } finally {
+        if (alive) setLoadingC(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
   }, []);
 
+  // Carica materie quando cambia il corso
   useEffect(() => {
     let alive = true;
-    if (!value.courseId) { setSubjects([]); return; }
-    setLoadingS(true);
-    fetch(`/api/subjects?courseId=${encodeURIComponent(value.courseId)}`, { cache: "no-store" })
-      .then(r => r.json())
-      .then(j => { if (alive) setSubjects(Array.isArray(j.subjects) ? j.subjects : []); })
-      .catch(() => setSubjects([]))
-      .finally(() => alive && setLoadingS(false));
-    return () => { alive = false; };
+    (async () => {
+      if (!value.courseId) {
+        setSubjects([]);
+        return;
+      }
+      try {
+        setLoadingS(true);
+        const { data, error } = await supabase
+          .from("subjects")
+          .select("id,name,course_id")
+          .eq("course_id", value.courseId)
+          .order("name", { ascending: true });
+        if (error) throw error;
+        if (alive) setSubjects(data ?? []);
+      } catch (e) {
+        console.error("load subjects failed:", e);
+        if (alive) setSubjects([]);
+      } finally {
+        if (alive) setLoadingS(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
   }, [value.courseId]);
 
   const noCourses = !loadingC && courses.length === 0;
@@ -47,7 +78,7 @@ export default function CourseSubjectPicker({
 
   return (
     <div className="space-y-6">
-      {/* Corso di Laurea — mantieni le tue classi */}
+      {/* Corso di Laurea (stile invariato) */}
       <div>
         <label className="block mb-2 text-neutral-700 text-[15px]">Corso di Laurea</label>
         <select
@@ -56,18 +87,20 @@ export default function CourseSubjectPicker({
           onChange={(e) => onChange({ courseId: e.target.value || undefined, subjectId: undefined })}
         >
           <option value="" disabled hidden>
-            {loadingC ? "Carico…" : (noCourses ? "Nessun corso disponibile" : "Seleziona corso")}
+            {loadingC ? "Carico…" : noCourses ? "Nessun corso disponibile" : "Seleziona corso"}
           </option>
           {!value.courseId && (
-            <option value="">
-              {loadingC ? "Carico…" : (noCourses ? "Nessun corso disponibile" : "Seleziona corso")}
-            </option>
+            <option value="">{loadingC ? "Carico…" : noCourses ? "Nessun corso disponibile" : "Seleziona corso"}</option>
           )}
-          {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {courses.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
         </select>
       </div>
 
-      {/* Materia — mantieni le tue classi */}
+      {/* Materia (stile invariato) */}
       <div>
         <label className="block mb-2 text-neutral-700 text-[15px]">Materia</label>
         <select
@@ -89,7 +122,11 @@ export default function CourseSubjectPicker({
           {(!value.courseId || noSubjects) && (
             <option value="">{!value.courseId ? "Seleziona corso prima" : "Nessuna materia disponibile"}</option>
           )}
-          {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          {subjects.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
         </select>
       </div>
     </div>
