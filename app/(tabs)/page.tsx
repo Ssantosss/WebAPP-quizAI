@@ -8,7 +8,7 @@ import { useSessionStore } from '@/store/useSessionStore';
 
 export default function HomePage() {
   const router = useRouter();
-  const [sel, setSel] = useState<PickerValue>({ courseId: undefined, subjectId: undefined });
+  const [sel, setSel] = useState<PickerValue>({}); // { courseId?, subjectId? }
   const startSession = useSessionStore((s) => s.startSession);
 
   const canStart = !!sel.courseId && !!sel.subjectId;
