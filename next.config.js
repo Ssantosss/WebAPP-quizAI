@@ -1,4 +1,5 @@
 const securityHeaders = [
+  { key: 'Cache-Control', value: 'no-store' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Permissions-Policy', value: 'camera=(), geolocation=(), microphone=()' },
