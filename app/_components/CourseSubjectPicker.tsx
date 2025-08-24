@@ -5,39 +5,51 @@ type Course = { id: string; name: string };
 type Subject = { id: string; name: string; course_id: string };
 
 export default function CourseSubjectPicker({
+  initialCourses = [],
   onChange,
 }: {
+  initialCourses?: Course[];
   onChange?: (p: { course?: Course; subject?: Subject }) => void;
 }) {
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<Course[]>(initialCourses);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [courseId, setCourseId] = useState('');
   const [subjectId, setSubjectId] = useState('');
-  const [loadingCourses, setLoadingCourses] = useState(true);
+  const [loadingCourses, setLoadingCourses] = useState(initialCourses.length === 0);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [error, setError] = useState('');
 
+  // Fallback: se il server non ha passato corsi, prova API client
   useEffect(() => {
     let alive = true;
+    if (initialCourses.length > 0) return; // già abbiamo i corsi
+
     (async () => {
       setError('');
+      setLoadingCourses(true);
       try {
-        const res = await fetch('/api/courses', { cache: 'no-store' });
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 8000);
+        const res = await fetch('/api/courses', { cache: 'no-store', signal: ctrl.signal });
+        clearTimeout(timer);
         if (!alive) return;
-        if (!res.ok) throw new Error(await res.text());
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data: Course[] = await res.json();
-        setCourses(data);
+        setCourses(data ?? []);
       } catch (e: any) {
         if (!alive) return;
+        console.error('Client load courses failed:', e);
         setError(`Errore corsi: ${e?.message ?? e}`);
         setCourses([]);
       } finally {
         if (alive) setLoadingCourses(false);
       }
     })();
-    return () => { alive = false; };
-  }, []);
 
+    return () => { alive = false; };
+  }, [initialCourses]);
+
+  // Materie al cambio corso
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -45,14 +57,18 @@ export default function CourseSubjectPicker({
       setError('');
       setLoadingSubjects(true);
       try {
-        const res = await fetch(`/api/subjects?course=${courseId}`, { cache: 'no-store' });
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 8000);
+        const res = await fetch(`/api/subjects?course=${courseId}`, { cache: 'no-store', signal: ctrl.signal });
+        clearTimeout(timer);
         if (!alive) return;
-        if (!res.ok) throw new Error(await res.text());
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data: Subject[] = await res.json();
-        setSubjects(data);
+        setSubjects(data ?? []);
         setSubjectId('');
       } catch (e: any) {
         if (!alive) return;
+        console.error('Client load subjects failed:', e);
         setError(`Errore materie: ${e?.message ?? e}`);
         setSubjects([]);
       } finally {
@@ -62,12 +78,15 @@ export default function CourseSubjectPicker({
     return () => { alive = false; };
   }, [courseId]);
 
+  // Propagate selection
   useEffect(() => {
     if (!onChange) return;
     const c = courses.find(c => c.id === courseId);
     const s = subjects.find(s => s.id === subjectId);
     onChange({ course: c, subject: s });
   }, [courseId, subjectId, courses, subjects, onChange]);
+
+  const hasCourses = courses.length > 0;
 
   return (
     <div className="space-y-3 relative z-20 pointer-events-auto">
@@ -79,7 +98,7 @@ export default function CourseSubjectPicker({
         aria-busy={loadingCourses}
       >
         <option value="">
-          {loadingCourses ? 'Carico…' : (courses.length ? 'Seleziona corso' : 'Nessun corso disponibile')}
+          {loadingCourses ? 'Carico…' : (hasCourses ? 'Seleziona corso' : 'Nessun corso disponibile')}
         </option>
         {courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
       </select>
