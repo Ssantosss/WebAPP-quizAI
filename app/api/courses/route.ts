@@ -1,19 +1,20 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase-server';
+import { getSupabaseAdmin } from '@/lib/supabase-server';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic'; // evita pre-render/valutazione statica
 
 export async function GET() {
-  const { data, error } = await supabaseAdmin
-    .from('courses')
-    .select('id,name')
-    .order('name', { ascending: true });
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from('courses')
+      .select('id,name')
+      .order('name', { ascending: true });
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, {
-      status: 500,
-      headers: { 'Cache-Control': 'no-store' },
-    });
+    if (error) throw error;
+    return NextResponse.json(data ?? [], { headers: { 'Cache-Control': 'no-store' } });
+  } catch (e: any) {
+    return NextResponse.json({ error: String(e?.message ?? e) }, { status: 500 });
   }
-  return NextResponse.json(data ?? [], { headers: { 'Cache-Control': 'no-store' } });
 }
