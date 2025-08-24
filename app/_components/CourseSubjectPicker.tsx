@@ -86,7 +86,7 @@ export default function CourseSubjectPicker({
     <div className="space-y-3">
       <label className="block text-sm font-medium">Corso di Laurea</label>
       <select
-        className="w-full rounded-xl border px-3 py-3"
+        className="w-full rounded-xl border px-3 py-3 relative z-20 pointer-events-auto"
         value={courseId}
         onChange={(e) => setCourseId(e.target.value)}
         disabled={loadingCourses}
@@ -108,7 +108,7 @@ export default function CourseSubjectPicker({
 
       <label className="block text-sm font-medium">Materia</label>
       <select
-        className="w-full rounded-xl border px-3 py-3"
+        className="w-full rounded-xl border px-3 py-3 relative z-20 pointer-events-auto"
         value={subjectId}
         onChange={(e) => setSubjectId(e.target.value)}
         disabled={!courseId || loadingSubjects}
