@@ -53,3 +53,41 @@ export async function GET() {
 }
 ```
 
+## Env & CORS
+
+Configura le variabili d'ambiente sia in `.env.local` che su Vercel:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://<PROJECT>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<ANON_KEY>
+```
+
+Imposta gli **Allowed Origins** in Supabase → Settings → API:
+
+```
+http://localhost:3000
+https://web-app-quiz-ai.vercel.app
+```
+
+## RLS per lettura pubblica
+
+Se vuoi permettere la lettura senza login, aggiungi queste policy:
+
+```sql
+-- Courses: lettura pubblica
+create policy "Public read courses"
+on public.courses
+for select
+to public
+using (true);
+
+-- Subjects: lettura pubblica
+create policy "Public read subjects"
+on public.subjects
+for select
+to public
+using (true);
+```
+
+In alternativa usa `to authenticated` per restringere l'accesso.
+
