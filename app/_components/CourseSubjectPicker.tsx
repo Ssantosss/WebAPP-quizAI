@@ -1,17 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase-browser';
 
 type Course = { id: string; name: string };
 type Subject = { id: string; name: string; course_id: string };
-
-function withTimeout<T>(p: Promise<T>, ms = 8000): Promise<T> {
-  // semplice timeout cross-platform (iOS incluso)
-  return Promise.race([
-    p,
-    new Promise<T>((_, rej) => setTimeout(() => rej(new Error('timeout')), ms)),
-  ]) as Promise<T>;
-}
 
 export default function CourseSubjectPicker({
   onChange,
@@ -26,22 +17,18 @@ export default function CourseSubjectPicker({
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [error, setError] = useState('');
 
-  // Carica corsi
   useEffect(() => {
     let alive = true;
     (async () => {
       setError('');
-      if (!supabase) { setError('Config Supabase mancante.'); setLoadingCourses(false); return; }
       try {
-        const { data, error } = await withTimeout(
-          supabase.from('courses').select('id,name').order('name', { ascending: true })
-        );
+        const res = await fetch('/api/courses', { cache: 'no-store' });
         if (!alive) return;
-        if (error) throw error;
-        setCourses(data ?? []);
+        if (!res.ok) throw new Error(await res.text());
+        const data: Course[] = await res.json();
+        setCourses(data);
       } catch (e: any) {
         if (!alive) return;
-        console.error('load courses failed', e);
         setError(`Errore corsi: ${e?.message ?? e}`);
         setCourses([]);
       } finally {
@@ -51,27 +38,21 @@ export default function CourseSubjectPicker({
     return () => { alive = false; };
   }, []);
 
-  // Carica materie al cambio corso
   useEffect(() => {
     let alive = true;
     (async () => {
-      setError('');
       if (!courseId) { setSubjects([]); setSubjectId(''); return; }
-      if (!supabase) { setError('Config Supabase mancante.'); return; }
+      setError('');
       setLoadingSubjects(true);
       try {
-        const { data, error } = await withTimeout(
-          supabase.from('subjects')
-            .select('id,name,course_id')
-            .eq('course_id', courseId)
-            .order('name', { ascending: true })
-        );
+        const res = await fetch(`/api/subjects?course=${courseId}`, { cache: 'no-store' });
         if (!alive) return;
-        if (error) throw error;
-        setSubjects(data ?? []); setSubjectId('');
+        if (!res.ok) throw new Error(await res.text());
+        const data: Subject[] = await res.json();
+        setSubjects(data);
+        setSubjectId('');
       } catch (e: any) {
         if (!alive) return;
-        console.error('load subjects failed', e);
         setError(`Errore materie: ${e?.message ?? e}`);
         setSubjects([]);
       } finally {
@@ -81,7 +62,6 @@ export default function CourseSubjectPicker({
     return () => { alive = false; };
   }, [courseId]);
 
-  // bubble up selection
   useEffect(() => {
     if (!onChange) return;
     const c = courses.find(c => c.id === courseId);
