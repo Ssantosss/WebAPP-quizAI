@@ -1,21 +1,24 @@
 'use client';
 import { useState } from 'react';
-import CourseSubjectPicker from '@/components/CourseSubjectPicker';
+import CourseSubjectPicker from '../_components/CourseSubjectPicker';
 import Button from '@/components/Button';
 import Buddy from '@/components/Buddy';
 import { useRouter } from 'next/navigation';
 
-type PickerValue = { courseId?: string; subjectId?: string };
+type PickerValue = {
+  course?: { id: string; name: string };
+  subject?: { id: string; name: string; course_id: string };
+};
 
 export default function HomePage() {
   const router = useRouter();
   const [sel, setSel] = useState<PickerValue>({});
 
-  const canStart = !!sel.courseId && !!sel.subjectId;
+  const canStart = !!sel.course?.id && !!sel.subject?.id;
 
   const start = () => {
     if (!canStart) return;
-    router.push(`/quiz?courseId=${sel.courseId}&subjectId=${sel.subjectId}`);
+    router.push(`/quiz?courseId=${sel.course!.id}&subjectId=${sel.subject!.id}`);
   };
 
   return (
