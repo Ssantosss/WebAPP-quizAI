@@ -1,16 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
 
-type Course = { id: string; name: string };
+type Course  = { id: string; name: string };
 type Subject = { id: string; name: string; course_id: string };
 
-export default function CourseSubjectPicker({
-  initialCourses = [],
-  onChange,
-}: {
-  initialCourses?: Course[];
-  onChange?: (p: { course?: Course; subject?: Subject }) => void;
-}) {
+export default function CourseSubjectPicker({ initialCourses = [] as Course[] }) {
   const [courses, setCourses] = useState<Course[]>(initialCourses);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [courseId, setCourseId] = useState('');
@@ -19,56 +13,40 @@ export default function CourseSubjectPicker({
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [error, setError] = useState('');
 
-  // Fallback: se il server non ha passato corsi, prova API client
+  // Fallback client solo se il server non ha passato corsi
   useEffect(() => {
     let alive = true;
-    if (initialCourses.length > 0) return; // già abbiamo i corsi
-
+    if (initialCourses.length > 0) return;
     (async () => {
-      setError('');
-      setLoadingCourses(true);
       try {
-        const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), 8000);
-        const res = await fetch('/api/courses', { cache: 'no-store', signal: ctrl.signal });
-        clearTimeout(timer);
+        const res = await fetch('/api/courses', { cache: 'no-store' });
         if (!alive) return;
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data: Course[] = await res.json();
-        setCourses(data ?? []);
+        if (!res.ok) throw new Error(`API /courses ${res.status}`);
+        setCourses(await res.json());
       } catch (e: any) {
-        if (!alive) return;
-        console.error('Client load courses failed:', e);
+        console.error('API /courses failed', e);
         setError(`Errore corsi: ${e?.message ?? e}`);
         setCourses([]);
       } finally {
         if (alive) setLoadingCourses(false);
       }
     })();
-
     return () => { alive = false; };
   }, [initialCourses]);
 
-  // Materie al cambio corso
+  // Materie
   useEffect(() => {
     let alive = true;
     (async () => {
       if (!courseId) { setSubjects([]); setSubjectId(''); return; }
-      setError('');
       setLoadingSubjects(true);
       try {
-        const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), 8000);
-        const res = await fetch(`/api/subjects?course=${courseId}`, { cache: 'no-store', signal: ctrl.signal });
-        clearTimeout(timer);
+        const res = await fetch(`/api/subjects?course=${courseId}`, { cache: 'no-store' });
         if (!alive) return;
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data: Subject[] = await res.json();
-        setSubjects(data ?? []);
-        setSubjectId('');
+        if (!res.ok) throw new Error(`API /subjects ${res.status}`);
+        setSubjects(await res.json()); setSubjectId('');
       } catch (e: any) {
-        if (!alive) return;
-        console.error('Client load subjects failed:', e);
+        console.error('API /subjects failed', e);
         setError(`Errore materie: ${e?.message ?? e}`);
         setSubjects([]);
       } finally {
@@ -77,14 +55,6 @@ export default function CourseSubjectPicker({
     })();
     return () => { alive = false; };
   }, [courseId]);
-
-  // Propagate selection
-  useEffect(() => {
-    if (!onChange) return;
-    const c = courses.find(c => c.id === courseId);
-    const s = subjects.find(s => s.id === subjectId);
-    onChange({ course: c, subject: s });
-  }, [courseId, subjectId, courses, subjects, onChange]);
 
   const hasCourses = courses.length > 0;
 
