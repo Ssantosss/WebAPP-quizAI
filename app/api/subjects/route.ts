@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase-server';
+import { supabaseServer } from '@/lib/supabase-server';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -8,7 +8,7 @@ export async function GET(req: Request) {
     const course = new URL(req.url).searchParams.get('course');
     if (!course) return NextResponse.json([], { headers: { 'Cache-Control': 'no-store' } });
 
-    const supa = getSupabaseAdmin();
+    const supa = supabaseServer();
     const { data, error } = await supa
       .from('subjects')
       .select('id,name,course_id')
