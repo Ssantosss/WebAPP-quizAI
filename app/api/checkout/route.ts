@@ -1,36 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+export const dynamic = 'force-dynamic';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2022-11-15',
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' as any });
 
-const priceMap: Record<string, Record<string, string | undefined>> = {
-  premium: {
-    month: process.env.PRICE_PREMIUM_MONTH,
-    '6mo': process.env.PRICE_PREMIUM_6MO,
-    year: process.env.PRICE_PREMIUM_YEAR,
-    '2year': process.env.PRICE_PREMIUM_2YEAR,
-  },
-  pro: {
-    month: process.env.PRICE_PRO_MONTH,
-    '6mo': process.env.PRICE_PRO_6MO,
-    year: process.env.PRICE_PRO_YEAR,
-    '2year': process.env.PRICE_PRO_2YEAR,
-  },
-};
-
-export async function POST(req: NextRequest) {
-  const { plan, period } = await req.json();
-  const price = priceMap[plan]?.[period];
-  if (!price) {
-    return NextResponse.json({ error: 'invalid_price' }, { status: 400, headers: { 'Cache-Control': 'no-store' } });
-  }
+export async function POST(req: Request) {
+  const { priceId, plan } = await req.json();
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
-    line_items: [{ price, quantity: 1 }],
-    success_url: process.env.STRIPE_SUCCESS_URL || '/',
-    cancel_url: process.env.STRIPE_CANCEL_URL || '/',
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: process.env.STRIPE_SUCCESS_URL!,
+    cancel_url: process.env.STRIPE_CANCEL_URL!,
+    metadata: { plan },
   });
-  return NextResponse.json({ id: session.id, url: session.url }, { headers: { 'Cache-Control': 'no-store' } });
+  return NextResponse.json({ url: session.url }, { headers: { 'Cache-Control': 'no-store' } });
 }

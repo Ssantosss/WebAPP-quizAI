@@ -1,29 +1,24 @@
 import { NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase-server';
-
-export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const hasUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const U = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const K = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  let canQuery = false;
-  let rows = 0;
-  let error: string | null = null;
-
+  let ok = false, rows = 0, error: string | null = null;
   try {
-    const supa = getSupabaseAdmin();
-    const { data, error: e } = await supa.from('courses').select('id', { count: 'exact', head: false });
-    if (e) throw e;
-    canQuery = true;
-    rows = Array.isArray(data) ? data.length : 0;
-  } catch (e: any) {
-    error = String(e?.message ?? e);
-  }
+    if (!U || !K) throw new Error('ENV missing');
+    const res = await fetch(`${U}/rest/v1/courses?select=id`, {
+      headers: { apikey: K, Authorization: `Bearer ${K}`, Accept: 'application/json' },
+      cache: 'no-store',
+    });
+    if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+    const data = await res.json();
+    ok = true; rows = Array.isArray(data) ? data.length : 0;
+  } catch (e:any) { error = e.message ?? String(e); }
 
   return NextResponse.json(
-    { env: { hasUrl, hasServiceKey }, supabase: { canQuery, rows, error } },
+    { env: { hasUrl: !!U, hasAnon: !!K }, supabase: { ok, rows, error } },
     { headers: { 'Cache-Control': 'no-store' } }
   );
 }
